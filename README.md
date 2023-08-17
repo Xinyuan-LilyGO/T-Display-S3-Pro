@@ -1,4 +1,4 @@
-<h1 align = "center">🌟T_Display_2.33 🌟</h1> 
+<h1 align = "center">🌟T-DISPLAY-S3-Pro 🌟</h1> 
 
 ## 1️⃣Product
 
@@ -8,6 +8,7 @@
 
 ## 2️⃣Examples
 
+```txt
 examples/
 ├── Factory                 # Factory example
 ├── LTR_553ALS              # LTR_553ALS example
@@ -42,7 +43,7 @@ examples/
 4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
   ![setting](images/ArduinoIDE.jpg)
-6. `File` -> `Examples` -> `T-Display-AMOLED-Lite` -> `Any Examples`
+6. `File` -> `Examples` -> `T-DISPLAY-S3-Pro` -> `Any Examples`
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
