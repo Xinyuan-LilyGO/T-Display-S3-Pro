@@ -1,0 +1,21 @@
+{
+    "name": "LTR 55X",
+    "keywords": "ambient,light,ltr,553,556",
+    "description": "A LTR-55x model drive",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/WishToo/LTR55x"
+    },
+    "version": "1.0.0",
+    "frameworks": "arduino",
+    "platforms": "atmelavr, atmelsam, freescalekinetis, nordicnrf51, nxplpc, ststm32, teensy, espressif8266, espressif32, nordicnrf52",
+    "authors": [
+        { "name": "Scotty Franzyshen" }, 
+        { 
+            "name": "Coopdis",
+            "url": "https://github.com/WishToo"
+        }, 
+        { "name": "WishToo" }
+    ],
+    "headers": "LTR55x.h"
+}
