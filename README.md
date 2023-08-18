@@ -48,9 +48,6 @@ examples/
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
-## 📽️ [Arduino IDE Video steps](https://youtu.be/WQIH7FD0yuU)
-
-
 
 # 5️⃣ ESP32 basic examples
 
@@ -76,4 +73,7 @@ Please enter the upload mode manually.
 # 7️⃣ Depends on required libraries
 
 * [XPowersLib](https://github.com/lewisxhe/XPowersLib)
-
+* [lvgl 8.3.1](https://github.com/lvgl/lvgl)
+* [LTR55x](https://github.com/WishToo/LTR55x)
+* [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)
+* [TouchLib](https://github.com/mmMicky/TouchLib)
