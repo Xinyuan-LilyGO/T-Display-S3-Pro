@@ -4524,6 +4524,7 @@ void TFT_eSPI::drawWedgeLine(float ax, float ay, float bx, float by, float ar, f
       #ifdef GC9A01_DRIVER
         uint16_t pcol = alphaBlend((uint8_t)(alpha * PixelAlphaGain), fg_color, bg);
         drawPixel(xp, yp, pcol);
+        swin = swin;
       #else
         if (swin) { setWindow(xp, yp, x1, yp); swin = false; }
         pushColor(alphaBlend((uint8_t)(alpha * PixelAlphaGain), fg_color, bg));
@@ -4561,6 +4562,7 @@ void TFT_eSPI::drawWedgeLine(float ax, float ay, float bx, float by, float ar, f
       #ifdef GC9A01_DRIVER
         uint16_t pcol = alphaBlend((uint8_t)(alpha * PixelAlphaGain), fg_color, bg);
         drawPixel(xp, yp, pcol);
+        swin = swin;
       #else
         if (swin) { setWindow(xp, yp, x1, yp); swin = false; }
         pushColor(alphaBlend((uint8_t)(alpha * PixelAlphaGain), fg_color, bg));
@@ -4971,7 +4973,10 @@ uint16_t TFT_eSPI::decodeUTF8(uint8_t *buf, uint16_t *index, uint16_t remaining)
 ** Function name:           alphaBlend
 ** Description:             Blend 16bit foreground and background
 *************************************************************************************x*/
-inline uint16_t TFT_eSPI::alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
+#if !defined (STM32) && !defined(__IMXRT1052__) && !defined(__IMXRT1062__)
+  inline 
+#endif
+uint16_t TFT_eSPI::alphaBlend(uint8_t alpha, uint16_t fgc, uint16_t bgc)
 {
   // Split out and blend 5 bit red and blue channels
   uint32_t rxb = bgc & 0xF81F;
@@ -5931,7 +5936,7 @@ void TFT_eSPI::setTextFont(uint8_t f)
 ** Function name:           getSPIinstance
 ** Description:             Get the instance of the SPI class
 ***************************************************************************************/
-#if !defined (TFT_PARALLEL_8_BIT) && ! defined (RP2040_PIO_INTERFACE)
+#if !defined (TFT_PARALLEL_8_BIT) && !defined (RP2040_PIO_INTERFACE)
 SPIClass& TFT_eSPI::getSPIinstance(void)
 {
   return spi;
