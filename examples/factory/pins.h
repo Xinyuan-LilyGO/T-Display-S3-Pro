@@ -22,7 +22,7 @@
 #define CS_PIN        (6)
 #define DC_PIN        (7)
 #define RST_PIN       (-1)
-#define BK_LIGHT_PIN  (38)
+#define BK_LIGHT_PIN  (48)
 
 // touch screen
 #define TOUCHSCREEN_SCLK_PIN (1)
