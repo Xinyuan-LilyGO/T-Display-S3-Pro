@@ -2,9 +2,11 @@
 
 ## 1️⃣Product
 
-| Product(PinMap)            | SOC        | Flash | PSRAM    | Resolution |
-| -------------------------- | ---------- | ----- | -------- | ---------- |
-| [T-DISPLAY-S3-Pro][1]      | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
+| Product(PinMap)       | SOC        | Flash | PSRAM    | Resolution |
+| --------------------- | ---------- | ----- | -------- | ---------- |
+| [T-DISPLAY-S3-Pro][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
+
+[1]: https://www.lilygo.cc/products/t-display-s3-pro
 
 ## 2️⃣Examples
 
