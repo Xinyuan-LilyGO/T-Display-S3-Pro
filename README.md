@@ -1,23 +1,27 @@
-<h1 align = "center">🌟T-DISPLAY-S3-Pro 🌟</h1> 
+<h1 align = "center">🌟 T-Display-S3-Pro 🌟</h1> 
 
 ## 1️⃣Product
 
 | Product(PinMap)       | SOC        | Flash | PSRAM    | Resolution |
 | --------------------- | ---------- | ----- | -------- | ---------- |
-| [T-DISPLAY-S3-Pro][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
+| [T-Display-S3-Pro][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
 
 [1]: https://www.lilygo.cc/products/t-display-s3-pro
 
 ## 2️⃣Examples
 
 ```txt
-examples/
-├── Factory                 # Factory example
-├── LTR_553ALS              # LTR_553ALS example
-├── tft                     # Tft example
-├── tft_touch               # Tft And touch example
-├── touch                   # Touchpad example
-└── lvgl_demo               # LVGL examples  
+examples
+├── examples/Arduino_GFX_HelloWorld           # Arduino_GFX example
+├── examples/Arduino_GFX_LvglBenchmark        # Arduino_GFX example
+├── examples/Arduino_GFX_PDQgraphicstest      # Arduino_GFX example
+├── examples/CameraShield                     # Camera example
+├── examples/CapacitiveTouch                  # Capacitive Touch example
+├── examples/LTR553ALS_Sensor                 # Light & Proximity Sensor example
+├── examples/TFT_eSPI_Simple                  # TFT_eSPI example
+├── examples/USB_HID_Example                  # USB Host HID & OTG example
+├── examples/UnitTest                         # Hardware unit testing example
+└── examples/factory                          # Factory example
 ```
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)
@@ -25,10 +29,10 @@ examples/
 1. Install [Visual Studio Code](https://code.visualstudio.com/) and [Python](https://www.python.org/)
 2. Search for the `PlatformIO` plugin in the `VisualStudioCode` extension and install it.
 3. After the installation is complete, you need to restart `VisualStudioCode`
-4. After restarting `VisualStudioCode`, select `File` in the upper left corner of `VisualStudioCode` -> `Open Folder` -> select the `T-DISPLAY-S3-Pro` directory
+4. After restarting `VisualStudioCode`, select `File` in the upper left corner of `VisualStudioCode` -> `Open Folder` -> select the `T-Display-S3-Pro` directory
 5. Wait for the installation of third-party dependent libraries to complete
 6. Click on the `platformio.ini` file, and in the `platformio` column
-7. Uncomment one of the lines `src_dir = xxxx` to make sure only one line works
+7. Uncomment one of the lines `default_envs = xxxx` to make sure only one line works
 8. Click the (✔) symbol in the lower left corner to compile
 9. Connect the board to the computer USB
 10. Click (→) to upload firmware
@@ -41,11 +45,11 @@ examples/
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
-3. Download `T-DISPLAY-S3-Pro` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
-4. Copy all folders in [libdeps folder](./libdeps/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
+3. Download `T-Display-S3-Pro` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
+4. Copy all folders in [lib folder](./lib/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
   ![setting](images/ArduinoIDE.jpg)
-6. `File` -> `Examples` -> `T-DISPLAY-S3-Pro` -> `Any Examples`
+6. Open `T-Display-S3-Pro` -> `examples` -> `any examples` -> `any eaxmples.ino`
 7. Select `Port`
 8. Click `upload` , Wait for compilation and writing to complete
 9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
@@ -75,7 +79,12 @@ Please enter the upload mode manually.
 # 7️⃣ Depends on required libraries
 
 * [XPowersLib](https://github.com/lewisxhe/XPowersLib)
+* [SensorLib](https://github.com/lewisxhe/SensorLib)
 * [lvgl 8.3.1](https://github.com/lvgl/lvgl)
-* [LTR55x](https://github.com/WishToo/LTR55x)
 * [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)
 * [TouchLib](https://github.com/mmMicky/TouchLib)
+* [Arduino_GFX](https://github.com/moononournation/Arduino_GFX)
+
+
+
+
