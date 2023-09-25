@@ -21,6 +21,7 @@ examples
 ├── examples/TFT_eSPI_Simple                  # TFT_eSPI example
 ├── examples/USB_HID_Example                  # USB Host HID & OTG example
 ├── examples/UnitTest                         # Hardware unit testing example
+├── examples/PMU_Example                      # Power management settings and battery information detection example
 └── examples/factory                          # Factory example
 ```
 
