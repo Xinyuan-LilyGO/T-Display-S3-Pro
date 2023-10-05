@@ -76,6 +76,8 @@ Please enter the upload mode manually.
    5. Upload sketch
 
 2. If the above is invalid, burn the [binary file](./firmware/README.MD)  to check whether the hardware is normal
+3. The OTG external power supply function requires turning on the  [PMU OTG enablement](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/d7f15b379da2b6f711998315401c02a740a8bfa8/examples/CameraShield/CameraShield.ino#L65). If the USB input is connected and the OTG is set to output, the battery will not be charged.
+4. Disconnecting the physical switch by flipping it to OFF will completely disconnect the battery from the motherboard. When charging is required, please flip the switch to ON.
 
 # 7️⃣ Depends on required libraries
 
