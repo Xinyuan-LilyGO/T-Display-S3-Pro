@@ -85,7 +85,8 @@ Please enter the upload mode manually.
 * [TFT_eSPI](https://github.com/Bodmer/TFT_eSPI)
 * [TouchLib](https://github.com/mmMicky/TouchLib)
 * [Arduino_GFX](https://github.com/moononournation/Arduino_GFX)
-
+* [MPU9250](https://github.com/hideakitai/MPU9250)
+* [MPU6050](https://github.com/electroniccats/mpu6050)
 
 
 
