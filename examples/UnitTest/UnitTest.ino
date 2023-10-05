@@ -40,6 +40,11 @@
 #include "zones.h"
 #include "img_converters.h"
 #include <AceButton.h>
+//QWIIC MPU9250 DEPENDENT
+#include <MPU9250.h>
+//QWIIC MPU6050 DEPENDENT
+#include <I2Cdev.h>
+#include <MPU6050.h>
 
 using namespace ace_button;
 
@@ -77,9 +82,12 @@ HTTPClient https;
 String httpBody;
 AceButton buttons[BOARD_USER_BTN_NUM];
 uint8_t buttonsArray[BOARD_USER_BTN_NUM] = BOARD_USER_BUTTON;
+// MPU9250/MPU6050 non onboard sensors, default access from QWIIC interface
+MPU9250 mpu;
+MPU6050 accelgyro;
 
 static int16_t x[5], y[5];
-static bool hasPMU, hasALS, hasTouch, hasCamera;
+static bool hasPMU, hasALS, hasTouch, hasCamera, hasMPU9250, hasMPU6050, hasSD;
 static bool isBacklightOn = true;
 static bool manualOff = false;
 static SemaphoreHandle_t spiLock;
@@ -141,6 +149,8 @@ void serialToScreen(lv_obj_t *parent, String string,  bool result)
     lv_label_set_text(label, result ? "#FFFFFF [# #00ff00 PASS# #FFFFFF ]#" : "#FFFFFF [# #ff0000  FAIL# #FFFFFF ]#");
     lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
 
+    lv_obj_scroll_to_y(parent, lv_disp_get_ver_res(NULL), LV_ANIM_ON);
+
     int i = 200;
     while (i--) {
         lv_task_handler();
@@ -192,11 +202,32 @@ void setup()
         serialToScreen(cont, "Mass storage", false);
     }
 
-    serialToScreen(cont, "Camera Model", hasCamera);
+    serialToScreen(cont, "Camera Model (Shield)", hasCamera);
+
+    // MPU9250/MPU6050 non onboard sensors, default access from QWIIC interface
+    hasMPU9250 = mpu.setup(0x68);
+    if (!hasMPU9250) {
+        accelgyro.initialize();
+        hasMPU6050 = accelgyro.testConnection() ;
+    }
+
+    if (hasMPU6050) {
+        serialToScreen(cont, "IMU MPU6050 (Non onboard,QWIIC or Shield)", hasMPU6050);
+        accelgyro.setTempSensorEnabled(true);
+    } else if (hasMPU9250) {
+        serialToScreen(cont, "IMU MPU9250 (Non onboard,QWIIC or Shield)", hasMPU9250);
+    } else {
+        serialToScreen(cont, "IMU (Non onboard,QWIIC or Shield)", false);
+    }
+
 
     initWiFi();
 
-    delay(3000);
+    uint32_t endTime = millis() + 5000;
+    while (millis() < endTime) {
+        lv_task_handler();
+        delay(1);
+    }
 
     lv_obj_del(cont);
 
@@ -354,6 +385,57 @@ void initGUI()
     massStorageUI(tv3);
 
     devicesUI(tv4);
+
+    // MPU9250/MPU6050 non onboard sensors, default access from QWIIC interface
+    if (hasMPU6050 || hasMPU9250) {
+
+        lv_obj_t *tv5 = lv_tileview_add_tile(tileview, 0, 4, LV_DIR_VER);
+
+        lv_obj_t *cont = lv_obj_create(tv5);
+
+        lv_obj_set_style_radius(cont, 0, 0);
+        lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+        lv_obj_center(cont);
+
+        lv_obj_t *label1 = lv_label_create(cont);
+        lv_label_set_recolor(label1, true);
+        lv_obj_set_style_text_font(label1, &lv_font_montserrat_18, 0);
+        lv_label_set_text(label1, "IMU");
+        lv_obj_center(label1);
+
+        lv_timer_create([](lv_timer_t *t) {
+            lv_obj_t *label = (lv_obj_t *)t->user_data;
+
+            if (hasMPU9250) {
+                if (mpu.update()) {
+                    Serial.print("Yaw, Pitch, Roll: ");
+                    Serial.print(mpu.getYaw(), 2);
+                    Serial.print(", ");
+                    Serial.print(mpu.getPitch(), 2);
+                    Serial.print(", ");
+                    Serial.println(mpu.getRoll(), 2);
+                    lv_label_set_text_fmt(label, "Yaw:%.2f\nPitch:%.2f\nRoll:%.2f", mpu.getYaw(), mpu.getPitch(), mpu.getRoll());
+                }
+            } else {
+                int16_t ax, ay, az;
+                int16_t gx, gy, gz;
+                accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+                int16_t rawTemp = accelgyro.getTemperature();
+                float temperature = (rawTemp / 340.0) + 36.53;
+                Serial.print("a/g:\t");
+                Serial.print(ax); Serial.print("\t");
+                Serial.print(ay); Serial.print("\t");
+                Serial.print(az); Serial.print("\t");
+                Serial.print(gx); Serial.print("\t");
+                Serial.print(gy); Serial.print("\t");
+                Serial.println(gz);
+                lv_label_set_text_fmt(label, "AX:%d AY:%d AZ:%d\nGX:%d GY:%d GZ:%d\nTemperature:%.2f",
+                                      ax, ay, az, gx, gy, gz, temperature);
+            }
+            lv_obj_center(label);
+
+        }, 100, label1);
+    }
 }
 
 void lv_device_switch_event_handler(lv_event_t *e)
