@@ -46,6 +46,7 @@
 #include <I2Cdev.h>
 #include <MPU6050.h>
 
+
 using namespace ace_button;
 
 #ifndef WIFI_SSID
@@ -92,6 +93,7 @@ static bool isBacklightOn = true;
 static bool manualOff = false;
 static SemaphoreHandle_t spiLock;
 static TaskHandle_t  vUpdateDateTimeTaskHandler = NULL;
+static camera_sensor_info_t *sinfo = NULL;
 
 #define CANVAS_WIDTH        480
 #define CANVAS_HEIGHT       222
@@ -202,7 +204,9 @@ void setup()
         serialToScreen(cont, "Mass storage", false);
     }
 
-    serialToScreen(cont, "Camera Model (Shield)", hasCamera);
+    char buf[256];
+    snprintf(buf, 256, "Camera Model (%s)", sinfo ? sinfo->name : "Shield");
+    serialToScreen(cont, buf, hasCamera);
 
     // MPU9250/MPU6050 non onboard sensors, default access from QWIIC interface
     hasMPU9250 = mpu.setup(0x68);
@@ -247,7 +251,23 @@ void loop()
             last_frame = micros();
             camera_fb_t *frame = esp_camera_fb_get();
             if (frame) {
-                memcpy(&cbuf->full, frame->buf, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(lv_color_t));
+                size_t frame_len = CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(lv_color_t);
+                /*
+                * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                * GC0308 causes panic within this sketch.
+                * GC0308 Please use CameraShield example.
+                * The reason is suspected to be caused internally by esp32_camera. It is not a device problem.
+                * Guru Meditation Error: Core  0 panic'ed (Unhandled debug exception).
+                * Debug exception reason: Stack canary watchpoint triggered (cam_task)
+                *
+                * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                * * * */
+                if (frame->len < frame_len) {
+                    Serial.println("error : frame->len < frame_len");
+                    esp_camera_fb_return(frame);
+                    break;
+                }
+                memcpy(&cbuf->full, frame->buf, frame_len);
                 lv_canvas_set_buffer(canvas, cbuf, CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR );
                 if (capture) {
                     saveJPEG(frame);
@@ -255,7 +275,7 @@ void loop()
                 int64_t fr_end = micros();
                 int64_t frame_time = fr_end - last_frame;
                 frame_time /= 1000;
-                Serial.printf("Frame Ues: %ums (%.1ffps)\n",  (uint32_t)frame_time, 1000.0 / (uint32_t)frame_time );
+                // Serial.printf("Frame Ues: %ums (%.1ffps)\n",  (uint32_t)frame_time, 1000.0 / (uint32_t)frame_time );
                 lv_draw_label_dsc_t label_dsc;
                 lv_draw_label_dsc_init(&label_dsc);
                 snprintf(buf, 256, "Frame Ues:%ums (%.1ffps)", (uint32_t)frame_time, 1000.0 / (uint32_t)frame_time);
@@ -828,18 +848,21 @@ bool initPMU()
         // To obtain voltage data, the ADC must be enabled first
         PMU.enableADCMeasure();
 
-        PMU.disableBattLoad();
+        // Turn off PMU battery load
+        PMU.disableBattery();
 
+        // Turn off the PMU charging indicator light
+        PMU.disableStatLed();
+
+        // Turn on PMU charging function
         PMU.enableCharge();
 
+        // Turn off OTG power supply output
         PMU.disableOTG();
-
-        PMU.enableStatLed();
 
         Serial.println("Find Power management");
     }
     return true;
-
 }
 
 //! Capacitive Touch
@@ -1229,6 +1252,19 @@ bool initCamera()
         hasCamera = false;
         Serial.print("Camera init FAIL,"); Serial.print("err = "); Serial.println(err);
         return false;
+    }
+
+    sensor_t *s = esp_camera_sensor_get();
+    if (s) {
+        Serial.print("camera id:");
+        Serial.println(s->id.PID);
+        sinfo = esp_camera_sensor_get_info(&(s->id));
+        Serial.print("camera model:");
+        Serial.println(sinfo->name);
+        if (s->id.PID == GC0308_PID) {
+            s->set_vflip(s, 0);
+            s->set_hmirror(s, 0);
+        }
     }
 
     hasCamera = true;

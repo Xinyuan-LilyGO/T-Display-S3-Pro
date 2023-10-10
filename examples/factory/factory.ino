@@ -202,7 +202,7 @@ void setup()
     if (!hasPMU) {
         Serial.println("PMU is not online...");
     } else {
-        PMU.disableBattLoad();
+        PMU.disableBattery();
         PMU.disableOTG();
         PMU.enableADCMeasure();
         PMU.enableCharge();

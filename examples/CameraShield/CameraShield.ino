@@ -5,9 +5,10 @@
  * @copyright Copyright (c) 2023  Shenzhen Xin Yuan Electronic Technology Co., Ltd
  * @date      2023-09-25
  * @note      Sketch Adaptation T-Display-S3-Pro Camera Shield , see README
- *
+ *            When turning on OTG power supply, please turn off the physical switch, then remove the
+ *            USB power supply, and then turn on the physical switch.
+ *            If OTG power supply is turned on when USB is connected, the device will not output OTG power supply.
  */
-
 #include <Arduino.h>
 #include <esp_camera.h>
 #include <TFT_eSPI.h>
@@ -112,8 +113,10 @@ void setup()
         // To obtain voltage data, the ADC must be enabled first
         PMU.enableADCMeasure();
 
-        PMU.disableBattLoad();
+        // Turn off PMU battery load
+        PMU.disableBattery();
 
+        // Turn off the PMU charging indicator light
         PMU.disableStatLed();
 
         Serial.println("Find Power management");
@@ -154,12 +157,28 @@ void setup()
 
     hasCamera = err == ESP_OK;
 
+    sensor_t *s = esp_camera_sensor_get();
+    if (s) {
+        Serial.print("camera id:");
+        Serial.println(s->id.PID);
+        camera_sensor_info_t *sinfo = esp_camera_sensor_get_info(&(s->id));
+        if (sinfo) {
+            Serial.print("camera model:");
+            Serial.println(sinfo->name);
+        }
+        if (s->id.PID == GC0308_PID) {
+            s->set_vflip(s, 0);
+            s->set_hmirror(s, 0);
+        }
+    }
+
+
     // Initialize Camera LED
     // Adjust the LED duty cycle to save power and heat.
     // If you directly set the LED to HIGH, the heat brought by the LED will be huge,
     // and the current consumption will also be huge.
-    ledcAttachPin(CAMERA_WHITH_LED, LEDC_WHITE_CH);
     ledcSetup(LEDC_WHITE_CH, 1000, 8);
+    ledcAttachPin(CAMERA_WHITH_LED, LEDC_WHITE_CH);
     ledcWrite(LEDC_WHITE_CH, 0);
     ledcWrite(LEDC_WHITE_CH, 20);
 

@@ -38,7 +38,7 @@
 #define CAMERA_PIN_SIOD     BOARD_I2C_SDA
 #define CAMERA_PIN_SIOC     BOARD_I2C_SCL
 #define CAMERA_PIN_VSYNC    (7)
-#define CAMERA_PIN_PWDN     (38)
+#define CAMERA_PIN_PWDN     (46)
 #define CAMERA_PIN_HREF     (15)
 #define CAMERA_PIN_Y9       (4)
 #define CAMERA_PIN_XCLK     (11)
@@ -50,10 +50,10 @@
 #define CAMERA_PIN_Y3       (41)
 #define CAMERA_PIN_Y2       (45)
 #define CAMERA_PIN_PCLK     (2)
-#define CAMERA_WHITH_LED    (46)
+#define CAMERA_WHITH_LED    (38)
 #define XCLK_FREQ_HZ        20000000
 
-#define LEDC_TFT_CH         0
+#define LEDC_TFT_CH         1
 #define LEDC_WHITE_CH       2
 
 // #define LEDC_IR_CH          1
