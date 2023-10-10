@@ -1,0 +1,44 @@
+name: PlatformIO CI
+
+on:
+  pull_request:
+  push:
+    paths:
+      - "examples/**"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        example:
+          [
+            "Arduino_GFX_HelloWorld",
+            "Arduino_GFX_LvglBenchmark",
+            "Arduino_GFX_PDQgraphicstest",
+            "CameraShield",
+            "CapacitiveTouch",
+            "LTR553ALS_Sensor",
+            "PMU_Example",
+            "TFT_eSPI_Simple",
+            "USB_HID_Example",
+            "UnitTest",
+            "factory",
+          ]
+    env:
+      EXAMPLES: ${{matrix.examples}}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Run PlatformIO
+        run: pio run -e $EXAMPLES
