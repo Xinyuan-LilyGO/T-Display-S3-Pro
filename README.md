@@ -1,5 +1,7 @@
 <h1 align = "center">🌟 T-Display-S3-Pro 🌟</h1> 
 
+[![PlatformIO CI](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml)
+
 ## 1️⃣Product
 
 | Product(PinMap)       | SOC        | Flash | PSRAM    | Resolution |
