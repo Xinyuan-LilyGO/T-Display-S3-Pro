@@ -26,9 +26,9 @@ void setup()
             delay(50);
         }
     }
-
+    // The onboard battery is fully charged at 4.35V
     // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
-    PMU.setChargeTargetVoltage(3856);
+    PMU.setChargeTargetVoltage(4352);
 
     // Set the precharge current , Range: 64mA ~ 1024mA ,step:64mA
     PMU.setPrechargeCurr(64);
