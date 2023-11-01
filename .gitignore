@@ -2,3 +2,6 @@
 .pio
 script
 build
+Test*
+*.github
+*.loacl
