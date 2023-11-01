@@ -837,8 +837,9 @@ bool initPMU()
     if (!hasPMU) {
         Serial.println("Failed to find Power management !"); return false;
     } else {
+        // The onboard battery is fully charged at 4.35V
         // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
-        PMU.setChargeTargetVoltage(4208);
+        PMU.setChargeTargetVoltage(4352);
 
         // Set the precharge current , Range: 64mA ~ 1024mA ,step:64mA
         PMU.setPrechargeCurr(64);
