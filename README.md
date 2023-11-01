@@ -2,6 +2,13 @@
 
 [![PlatformIO CI](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml)
 
+## News
+
+- The early version of T-Display-S3-Pro V1.0 uses PWM for backlight adjustment. The V1.1 upgrade uses backlight constant current drive. The drive method is different. Please see the [example](./examples/AdjustBacklight/AdjustBacklight.ino) for specific usage.
+- How to distinguish versions?
+  * If USBC is marked with V1.1, it is the current version. If not, it is V1.0.
+
+
 ## 1️⃣Product
 
 | Product(PinMap)       | SOC        | Flash | PSRAM    | Resolution |
@@ -24,6 +31,7 @@ examples
 ├── examples/USB_HID_Example                  # USB Host HID & OTG example
 ├── examples/UnitTest                         # Hardware unit testing example
 ├── examples/PMU_Example                      # Power management settings and battery information detection example
+├── examples/AdjustBacklight                  # Backlight adjustment example
 └── examples/factory                          # Factory example
 ```
 
