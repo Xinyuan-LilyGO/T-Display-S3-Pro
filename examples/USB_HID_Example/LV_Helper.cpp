@@ -67,10 +67,36 @@ static void mouse_read(lv_indev_drv_t *indev, lv_indev_data_t *data)
     data->point.y = last_y;
 }
 
-void setBrightness(uint8_t bri)
+
+void setBrightness(uint8_t value)
 {
-    ledcWrite(LEDC_TFT_CH, bri);
+#ifdef USING_DISPLAY_PRO_V1
+    ledcWrite(LEDC_TFT_CH, value);
+#else
+    static uint8_t level = 0;
+    static uint8_t steps = 16;
+    if (value == 0) {
+        digitalWrite(BOARD_TFT_BL, 0);
+        delay(3);
+        level = 0;
+        return;
+    }
+    if (level == 0) {
+        digitalWrite(BOARD_TFT_BL, 1);
+        level = steps;
+        delayMicroseconds(30);
+    }
+    int from = steps - level;
+    int to = steps - value;
+    int num = (steps + to - from) % steps;
+    for (int i = 0; i < num; i++) {
+        digitalWrite(BOARD_TFT_BL, 0);
+        digitalWrite(BOARD_TFT_BL, 1);
+    }
+    level = value;
+#endif
 }
+
 
 void lv_helper(QueueHandle_t queue_i, int *x_max_o, int *y_max_o)
 {
@@ -98,7 +124,7 @@ void lv_helper(QueueHandle_t queue_i, int *x_max_o, int *y_max_o)
             static uint32_t checkMs = 0;
             if (millis() > checkMs) {
                 if (isBacklightOn) {
-                    for (int i = 255; i >= 0; --i) {
+                    for (int i = BRIGHTNESS_MAX_LEVEL; i >= 0; --i) {
                         setBrightness( i);
                         delay(1);
                     }
@@ -106,7 +132,7 @@ void lv_helper(QueueHandle_t queue_i, int *x_max_o, int *y_max_o)
                     isBacklightOn = false;
                 } else {
                     isBacklightOn = true;
-                    for (int i = 0; i <= 255; ++i) {
+                    for (int i = 0; i <= BRIGHTNESS_MAX_LEVEL; ++i) {
                         setBrightness( i);
                         delay(1);
                     }
@@ -158,13 +184,17 @@ void lv_helper(QueueHandle_t queue_i, int *x_max_o, int *y_max_o)
 
     }
 
+#ifdef USING_DISPLAY_PRO_V1
     ledcSetup(LEDC_TFT_CH, 1000, 8);
     ledcAttachPin(BOARD_TFT_BL, LEDC_TFT_CH);
     ledcWrite(LEDC_TFT_CH, 0);
-    for (int i = 0; i <= 255; ++i) {
+    for (int i = 0; i <= BRIGHTNESS_MAX_LEVEL; ++i) {
         ledcWrite(LEDC_TFT_CH, i);
         delay(1);
     }
+#else
+    pinMode(BOARD_TFT_BL, OUTPUT);
+#endif
 
 }
 

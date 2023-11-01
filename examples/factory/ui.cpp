@@ -1,5 +1,5 @@
 #include "ui.h"
-
+#include "utilities.h"
 #include "lvgl.h"
 #include "stdio.h"
 
@@ -2065,8 +2065,9 @@ void ui_home_create(lv_obj_t **ui_home, lv_obj_t *parent)
 #if !WIN
 void set_ui_Slider2_value(int32_t value)
 {
-    if (ui_Slider2 != NULL)
-        lv_slider_set_value(ui_Slider2, value > 255 ? 255 : value, LV_ANIM_OFF);
+    if (ui_Slider2 != NULL) {
+        lv_slider_set_value(ui_Slider2, value >= BRIGHTNESS_MAX_LEVEL ? BRIGHTNESS_MAX_LEVEL : value, LV_ANIM_OFF);
+    }
 }
 #endif
 
@@ -2362,7 +2363,7 @@ void ui_init(void)
     lv_obj_set_style_outline_color(ui_Image7, lv_color_hex(0x3D0EC9), LV_PART_MAIN | LV_STATE_CHECKED);
 
     ui_Slider2 = lv_slider_create(ui_controlCenter);
-    lv_slider_set_range(ui_Slider2, 1, 255);
+    lv_slider_set_range(ui_Slider2, 1, BRIGHTNESS_MAX_LEVEL);
     lv_slider_set_value(ui_Slider2, 255, LV_ANIM_OFF);
     if (lv_slider_get_mode(ui_Slider2) == LV_SLIDER_MODE_RANGE) lv_slider_set_left_value(ui_Slider2, 0, LV_ANIM_OFF);
     lv_obj_set_width(ui_Slider2, 50);

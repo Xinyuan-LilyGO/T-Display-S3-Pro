@@ -10,6 +10,12 @@
 // https://www.lilygo.cc/products/t-display-s3-pro
 // T-Dispaly-Pro pinmap
 
+
+//! Using T-Display-Pro V1.0 , uncomment use V1.1 ,
+//! The difference between V1.0 and V1.1 is the backlight driver.
+// #define USING_DISPLAY_PRO_V1
+
+
 // LTR553 , TOUCH , SY6970 , Camera share I2C Bus
 #define BOARD_I2C_SDA       5
 #define BOARD_I2C_SCL       6
@@ -61,3 +67,9 @@
 // #define LEDC_IR_CH          1
 // #define CAMERA_IR_LED       (46)
 
+
+#ifdef USING_DISPLAY_PRO_V1
+#define BRIGHTNESS_MAX_LEVEL        255
+#else
+#define BRIGHTNESS_MAX_LEVEL        16
+#endif

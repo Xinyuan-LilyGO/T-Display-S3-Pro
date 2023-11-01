@@ -57,9 +57,34 @@ static void lv_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     }
 }
 
-void setBrightness(uint8_t bri)
+
+void setBrightness(uint8_t value)
 {
-    ledcWrite(LEDC_TFT_CH, bri);
+#ifdef USING_DISPLAY_PRO_V1
+    ledcWrite(LEDC_TFT_CH, value);
+#else
+    static uint8_t level = 0;
+    static uint8_t steps = 16;
+    if (value == 0) {
+        digitalWrite(BOARD_TFT_BL, 0);
+        delay(3);
+        level = 0;
+        return;
+    }
+    if (level == 0) {
+        digitalWrite(BOARD_TFT_BL, 1);
+        level = steps;
+        delayMicroseconds(30);
+    }
+    int from = steps - level;
+    int to = steps - value;
+    int num = (steps + to - from) % steps;
+    for (int i = 0; i < num; i++) {
+        digitalWrite(BOARD_TFT_BL, 0);
+        digitalWrite(BOARD_TFT_BL, 1);
+    }
+    level = value;
+#endif
 }
 
 void lv_touch_homekey_set_cb(home_button_callback_t  cb)
@@ -127,13 +152,17 @@ void lv_helper(uint8_t r)
     lv_indev_drv_register(&indev_drv);
 
 
+#ifdef USING_DISPLAY_PRO_V1
     ledcSetup(LEDC_TFT_CH, 1000, 8);
     ledcAttachPin(BOARD_TFT_BL, LEDC_TFT_CH);
     ledcWrite(LEDC_TFT_CH, 0);
-    for (int i = 0; i <= 255; ++i) {
+    for (int i = 0; i <= BRIGHTNESS_MAX_LEVEL; ++i) {
         ledcWrite(LEDC_TFT_CH, i);
         delay(1);
     }
+#else
+    pinMode(BOARD_TFT_BL, OUTPUT);
+#endif
 
 }
 

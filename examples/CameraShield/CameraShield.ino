@@ -113,9 +113,6 @@ void setup()
         // To obtain voltage data, the ADC must be enabled first
         PMU.enableADCMeasure();
 
-        // Turn off PMU battery load
-        PMU.disableBattery();
-
         // Turn off the PMU charging indicator light
         PMU.disableStatLed();
 

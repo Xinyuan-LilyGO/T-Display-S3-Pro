@@ -62,6 +62,7 @@ using namespace ace_button;
 #define GMT_OFFSET_SEC        0
 #define DAY_LIGHT_OFFSET_SEC  0
 #define GET_TIMEZONE_API      "https://ipapi.co/timezone/"
+#define DEFAULT_TIMEZONE      "CST-8"         //When the time zone cannot be obtained, the default time zone is used
 
 
 #define SPI_LOCK            xSemaphoreTake(spiLock,portMAX_DELAY)
@@ -848,9 +849,6 @@ bool initPMU()
         // To obtain voltage data, the ADC must be enabled first
         PMU.enableADCMeasure();
 
-        // Turn off PMU battery load
-        PMU.disableBattery();
-
         // Turn off the PMU charging indicator light
         PMU.disableStatLed();
 
@@ -879,7 +877,7 @@ bool initCapacitiveTouch()
             static uint32_t checkMs = 0;
             if (millis() > checkMs) {
                 if (isBacklightOn) {
-                    for (int i = 255; i >= 0; --i) {
+                    for (int i = BRIGHTNESS_MAX_LEVEL; i >= 0; --i) {
                         setBrightness( i);
                         delay(1);
                     }
@@ -889,7 +887,7 @@ bool initCapacitiveTouch()
                 } else {
                     manualOff = false;
                     isBacklightOn = true;
-                    for (int i = 0; i <= 255; ++i) {
+                    for (int i = 0; i <= BRIGHTNESS_MAX_LEVEL; ++i) {
                         setBrightness( i);
                         delay(1);
                     }
@@ -1076,18 +1074,46 @@ void lv_helper()
 
 void initBackLight()
 {
+#ifdef USING_DISPLAY_PRO_V1
     ledcSetup(LEDC_TFT_CH, 1000, 8);
     ledcAttachPin(BOARD_TFT_BL, LEDC_TFT_CH);
     ledcWrite(LEDC_TFT_CH, 0);
-    for (int i = 0; i <= 255; ++i) {
+    for (int i = 0; i <= BRIGHTNESS_MAX_LEVEL; ++i) {
         ledcWrite(LEDC_TFT_CH, i);
         delay(1);
     }
+#else
+    pinMode(BOARD_TFT_BL, OUTPUT);
+#endif
 }
 
-void setBrightness(uint8_t bri)
+void setBrightness(uint8_t value)
 {
-    ledcWrite(LEDC_TFT_CH, bri);
+#ifdef USING_DISPLAY_PRO_V1
+    ledcWrite(LEDC_TFT_CH, value);
+#else
+    static uint8_t level = 0;
+    static uint8_t steps = 16;
+    if (value == 0) {
+        digitalWrite(BOARD_TFT_BL, 0);
+        delay(3);
+        level = 0;
+        return;
+    }
+    if (level == 0) {
+        digitalWrite(BOARD_TFT_BL, 1);
+        level = steps;
+        delayMicroseconds(30);
+    }
+    int from = steps - level;
+    int to = steps - value;
+    int num = (steps + to - from) % steps;
+    for (int i = 0; i < num; i++) {
+        digitalWrite(BOARD_TFT_BL, 0);
+        digitalWrite(BOARD_TFT_BL, 1);
+    }
+    level = value;
+#endif
 }
 
 bool initSD()
@@ -1189,31 +1215,32 @@ void datetimeSyncTask(void *ptr)
             } else {
                 Serial.printf("[HTTPS] GET... failed, error: %s\n",
                               https.errorToString(httpCode).c_str());
+                // When the time zone cannot be obtained, the default time zone is used
+                httpBody = "none";
             }
             https.end();
         }
 
         client.stop();
 
-        if (httpCode == HTTP_CODE_OK ) {
-            for (uint32_t i = 0; i < sizeof(zones); i++) {
-                if (httpBody == "none") {
-                    httpBody = "CST-8";
-                    break;
-                }
-                if (httpBody == zones[i].name) {
-                    httpBody = zones[i].zones;
-                    break;
-                }
+        for (uint32_t i = 0; i < sizeof(zones); i++) {
+            if (httpBody == "none") {
+                // When the time zone cannot be obtained, the default time zone is used
+                httpBody = DEFAULT_TIMEZONE;
+                break;
             }
-            Serial.println("timezone : " + httpBody);
-            setenv("TZ", httpBody.c_str(), 1); // set time zone
-            tzset();
-
-            vUpdateDateTimeTaskHandler = NULL;
-            // Just run once
-            vTaskDelete(NULL);
+            if (httpBody == zones[i].name) {
+                httpBody = zones[i].zones;
+                break;
+            }
         }
+        Serial.println("timezone : " + httpBody);
+        setenv("TZ", httpBody.c_str(), 1); // set time zone
+        tzset();
+
+        vUpdateDateTimeTaskHandler = NULL;
+        // Just run once
+        vTaskDelete(NULL);
     }
 }
 
