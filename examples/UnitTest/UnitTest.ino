@@ -477,8 +477,12 @@ void lv_device_switch_event_handler(lv_event_t *e)
             Serial.println("OTG DISABLE");
             PMU.disableOTG();
         } else {
-            PMU.enableOTG();
-            Serial.println("OTG ENABLE");
+            if (!PMU.enableOTG()) {
+                Serial.println("Enable OTG Failed!");
+                lv_obj_clear_state(sw, LV_STATE_CHECKED);
+            } else {
+                Serial.println("OTG ENABLE");
+            }
         }
         break;
     // "State LED Enable"
@@ -837,15 +841,19 @@ bool initPMU()
     if (!hasPMU) {
         Serial.println("Failed to find Power management !"); return false;
     } else {
+
         // The onboard battery is fully charged at 4.35V
         // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
         PMU.setChargeTargetVoltage(4352);
+
+        Serial.printf("Get Charge Target Voltage:%u\n", PMU.getChargeTargetVoltage());
 
         // Set the precharge current , Range: 64mA ~ 1024mA ,step:64mA
         PMU.setPrechargeCurr(64);
 
         // Set the charging current , Range:0~5056mA ,step:64mA
         PMU.setChargerConstantCurr(640);
+        Serial.printf("Get Charge Constant current:%u\n", PMU.getChargerConstantCurr());
 
         // To obtain voltage data, the ADC must be enabled first
         PMU.enableADCMeasure();
