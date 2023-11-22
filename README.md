@@ -32,6 +32,7 @@ examples
 ├── examples/UnitTest                         # Hardware unit testing example
 ├── examples/PMU_Example                      # Power management settings and battery information detection example
 ├── examples/AdjustBacklight                  # Backlight adjustment example
+├── examples/Cellphone                        # With camera that can take pictures, to view the photos in the album (sd card required)
 └── examples/factory                          # Factory example
 ```
 

@@ -24,6 +24,7 @@ jobs:
             "USB_HID_Example",
             "UnitTest",
             "factory",
+            "CellPhone"
           ]
     steps:
       - uses: actions/checkout@v3
