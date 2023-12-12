@@ -166,10 +166,7 @@ bool sd_card_bmp_lvgl(const char * path, uint32_t w, uint32_t h, lv_obj_t *canva
     for(int i = 0; i < h; i++)
         for(int j = 0; j < w; j++){
             lv_color_t lv_color;
-            // lv_color = lv_canvas_get_px(canvas, i, j);         // 逆時針90
-            // lv_color = lv_canvas_get_px(canvas, i, w - j);     // 順時針90
-            // lv_color = lv_canvas_get_px(canvas, w - j, i);     // 180
-            lv_color = lv_canvas_get_px(canvas, w - j, h - i); // 0
+            lv_color = lv_canvas_get_px(canvas, j, h - i); 
             color.rgb.r = lv_color.ch.red;
             color.rgb.g = (lv_color.ch.green_h << 3 | lv_color.ch.green_l) & 0x3f;
             color.rgb.b = lv_color.ch.blue;

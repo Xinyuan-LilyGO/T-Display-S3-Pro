@@ -34,6 +34,9 @@ examples
 ├── examples/AdjustBacklight                  # Backlight adjustment example
 ├── examples/Cellphone                        # With camera that can take pictures, to view the photos in the album (sd card required)
 └── examples/factory                          # Factory example
+
+If use the 'examples/Cellphone' examples,
+be careful not block the top of the "S3-Pro" screen, if it is blocked, the screen will sleep.
 ```
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)

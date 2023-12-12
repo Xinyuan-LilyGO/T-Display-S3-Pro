@@ -283,8 +283,8 @@ void camera_init(void)
             Serial.println(sinfo->name);
         }
         if (s->id.PID == GC0308_PID) {
-            s->set_vflip(s, 1);
-            s->set_hmirror(s, 1);
+            s->set_vflip(s, 0); // This can't flip the picture vertically. Watch out!
+            s->set_hmirror(s, 0);
         }else if (s->id.PID == OV5640_PID){
             ov5640.start(s);
             if (ov5640.focusInit() == 0) {

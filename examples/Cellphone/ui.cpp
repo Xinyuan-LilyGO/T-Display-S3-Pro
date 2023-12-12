@@ -610,6 +610,13 @@ void cmaera_async_play(void *p)
 {
 }
 
+static void px_swap(uint8_t *a, uint8_t *b)
+{
+    uint8_t c = *a;
+    *a = *b;
+    *b = c;
+}
+
 static void camera_video_play(lv_timer_t *t)
 {
     // lv_async_call(cmaera_async_play, NULL);
@@ -618,7 +625,15 @@ static void camera_video_play(lv_timer_t *t)
         sensor_t *s = esp_camera_sensor_get();
         ESP_LOGI("", "id=%d, w=%d, h=%d, len=%d", s->id.PID, frame->width, frame->height, frame->len);
 #if UI_CAMERA_CANVAS 
-        lv_canvas_set_buffer(ui_camera_canvas, frame->buf, frame->width, frame->height, LV_IMG_CF_TRUE_COLOR);
+
+        if(s->id.PID == GC0308_PID){
+            for(int i = 0; i < frame->len / 2; i++){
+                px_swap(&frame->buf[i], &frame->buf[frame->len-i]);
+            }
+        }
+        
+        lv_canvas_set_buffer(ui_camera_canvas, frame->buf, frame->height, frame->width, LV_IMG_CF_TRUE_COLOR);
+
 #else
         img_canvas_src.header.cf = LV_IMG_CF_RAW;
         img_canvas_src.header.always_zero = 0;
