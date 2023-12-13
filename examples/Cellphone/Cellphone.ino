@@ -176,17 +176,6 @@ void updatePMU(lv_timer_t *t)
 
 void updateLightDected(lv_timer_t *t)
 {
-    if (autonBrightness) {
-        bool saturated;
-        Serial.print(" ALS: CH1:"); Serial.print(als.getLightSensor(1));
-        Serial.print(" -  CH0:"); Serial.print(als.getLightSensor(0));
-        Serial.print(" -  PS:"); Serial.print(als.getProximity(&saturated));
-        Serial.print(" -  "); Serial.println(saturated ? "PS saturated" : "PS not saturated");
-    }
-}
-
-void updateAlsState(lv_timer_t *t) // Detect if an object is blocking the screen
-{
     int ps_thread = 40; // range: 0 ~ 100
     int ps_time = 2;    // 3 seconds to think there's an object covering the screen
     int ch0, ch1, ps;
@@ -194,39 +183,42 @@ void updateAlsState(lv_timer_t *t) // Detect if an object is blocking the screen
     static uint32_t cnt = 0;
     static bool cover_flag = false;
 
-    if (!hasSensor)
+    if (autonBrightness) {
+        bool saturated;
+        Serial.print(" ALS: CH1:"); Serial.print(als.getLightSensor(1));
+        Serial.print(" -  CH0:"); Serial.print(als.getLightSensor(0));
+        Serial.print(" -  PS:"); Serial.print(als.getProximity(&saturated));
+        Serial.print(" -  "); Serial.println(saturated ? "PS saturated" : "PS not saturated");
+
+        if (!hasSensor)
         return;
 
-    ch0 = als.getLightSensor(0);
-    ch1 = als.getLightSensor(1);
-    ps = als.getProximity(&saturated);
+        ch0 = als.getLightSensor(0);
+        ch1 = als.getLightSensor(1);
+        ps = als.getProximity(&saturated);
 
-    // Serial.print(" ALS: CH1:"); Serial.print(ch1);
-    // Serial.print(" -  CH0:"); Serial.print(ch0);
-    // Serial.print(" -  PS:"); Serial.print(ps);
-    // Serial.print(" -  "); Serial.println(saturated ? "PS saturated" : "PS not saturated");
-
-    if(ps > ps_thread){
-        if(!cover_flag){
-            cnt++;
-            if(cnt * t->period > ps_time * 1000){
-                digitalWrite(BOARD_TFT_BL, 0);
-                delay(3);
-                cnt = 0;
-                cover_flag = true;
+        if(ps > ps_thread){
+            if(!cover_flag){
+                cnt++;
+                if(cnt * t->period > ps_time * 1000){
+                    digitalWrite(BOARD_TFT_BL, 0);
+                    delay(3);
+                    cnt = 0;
+                    cover_flag = true;
+                }
             }
-        }
-    } else {
-        if(cover_flag){
-            cnt++;
-            if(cnt * t->period > ps_time * 1000){
-                digitalWrite(BOARD_TFT_BL, 1);
-                delay(3);
+        } else {
+            if(cover_flag){
+                cnt++;
+                if(cnt * t->period > ps_time * 1000){
+                    digitalWrite(BOARD_TFT_BL, 1);
+                    delay(3);
+                    cnt = 0;
+                    cover_flag = false;
+                }
+            }else{
                 cnt = 0;
-                cover_flag = false;
             }
-        }else{
-            cnt = 0;
         }
     }
 }
@@ -350,8 +342,6 @@ void setup()
 
     // TODO:
     lv_timer_create(updateLightDected, 500, NULL);
-
-    lv_timer_create(updateAlsState, 500, NULL);
 }
 
 void loop()
