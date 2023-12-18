@@ -2478,8 +2478,25 @@ void flashlight_btn_cb(lv_event_t *e)
 
     light_flag = !light_flag;
 
-    // Serial.println(n);
+    Serial.println(n);
     // Serial.println("flashlight");
+}
+
+static void slider_event_cb(lv_event_t * e)
+{
+    lv_obj_t *label = (lv_obj_t *)lv_event_get_user_data(e);
+    lv_obj_t * slider = lv_event_get_target(e);
+    char buf[8];
+
+    if(label != NULL){
+        int val = (int)lv_slider_get_value(slider);
+        lv_snprintf(buf, sizeof(buf), "%d%%", val);
+        lv_label_set_text(label, buf);
+        lv_obj_align_to(label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+        analogWrite(VIBRATING_MOTOR, lv_map(val, 0, 100, 0, 255));
+        if(val < 10)
+            digitalWrite(VIBRATING_MOTOR, LOW);
+    }
 }
 
 
@@ -3017,6 +3034,15 @@ void ui_init(void)
     lv_obj_set_style_img_recolor(ui_Image19, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor_opa(ui_Image19, 255, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_event_cb(ui_Image19, camera_open_btn_cb, LV_EVENT_CLICKED, (void *)19);
+
+    /*Create a slider in the center of the display*/
+    lv_obj_t * slider = lv_slider_create(ui_controlCenter);
+    lv_obj_set_size(slider, 180, 15);
+    lv_obj_align_to(slider, ui_controlCenter, LV_ALIGN_BOTTOM_MID, 0, -100);
+    lv_obj_t * slider_label = lv_label_create(ui_controlCenter);
+    lv_label_set_text(slider_label, "0%");
+    lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
 
     lv_obj_add_event_cb(ui_controlListener, ui_event_controlListener, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_controlCenter, ui_event_controlCenter, LV_EVENT_ALL, NULL);

@@ -309,6 +309,10 @@ void setup()
 
     Serial.begin(115200);
 
+    // vibrating motor init
+    pinMode(VIBRATING_MOTOR, OUTPUT);
+    digitalWrite(VIBRATING_MOTOR, LOW);
+
     WiFi.disconnect(true);
     WiFi.onEvent(WiFiEvent);
 
