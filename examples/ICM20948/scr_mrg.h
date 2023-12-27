@@ -1,0 +1,53 @@
+﻿#ifndef __SCR_MRG_H__
+#define __SCR_MRG_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "lvgl.h"
+
+#define SCR_MGR_ANIM_TIME 500
+#define SCR_MGR_SCR_SWITCH_ANIM    LV_SCR_LOAD_ANIM_MOVE_TOP
+#define SCR_MGR_SCR_PUSH_ANIM      LV_SCR_LOAD_ANIM_MOVE_LEFT
+#define SCR_MGR_SCR_POP_ANIM       LV_SCR_LOAD_ANIM_MOVE_RIGHT
+typedef enum scr_mgr_state {
+    SCR_MGR_STATE_IDLE = 0,  /* Not in use */
+    SCR_MGR_STATE_DESTROYED, /* Not active and having been destroyed */
+    SCR_MGR_STATE_CREATED,   /* Created */
+    SCR_MGR_STATE_INACTIVE,  /* Not active */
+    SCR_MGR_STATE_ACTIVE_BG, /* Active but at the background */
+    SCR_MGR_STATE_ACTIVE,    /* Active and at the foreground */
+} scr_mgr_state_e;
+
+typedef struct scr_lifecycle {
+    void (*create)(lv_obj_t *parent);
+    void (*entry)(void);
+    void (*exit)(void);
+    void (*destroy)(void);
+} scr_lifecycle_t;
+
+typedef struct scr_card {
+    int id;
+    lv_obj_t        *obj;
+    scr_mgr_state_e  st;
+    scr_lifecycle_t *life;
+    struct scr_card *next;
+    struct scr_card *prev;
+} scr_card_t;
+
+/*********************************************************************************
+ *                              GLOBAL PROTOTYPES
+ * *******************************************************************************/
+void scr_mgr_init(void);
+bool scr_mgr_register(int id, scr_lifecycle_t *card_life);
+bool scr_mgr_switch(int id, bool anim);
+bool scr_mgr_push(int id, bool anim);
+bool scr_mgr_pop(bool anim);
+
+
+#ifdef __cplusplus
+} /*extern "C"*/
+#endif
+
+#endif /*__SCR_MRG_H__*/
