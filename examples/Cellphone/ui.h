@@ -12,6 +12,7 @@
 
 #define TARGET_FOLDER "/"
 #define UI_CAMERA_CANVAS 1
+#define UI_PROMPT_TIME  1000
 
 #define LV_DELAY(x)                                                                                                                                  \
 do {                                                                                                                                               \
