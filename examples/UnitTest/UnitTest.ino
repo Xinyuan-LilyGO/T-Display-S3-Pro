@@ -348,7 +348,7 @@ void updateDateTimeTask(lv_timer_t *args)
     lv_label_set_text_fmt(hour_text, "%02d", timeinfo.tm_hour);
     lv_label_set_text_fmt(min_text, "%02d", timeinfo.tm_min);
 
-    bool saturated;
+    bool saturated = false;
 
     static  uint8_t cnt = 0;
 

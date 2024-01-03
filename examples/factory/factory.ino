@@ -1,7 +1,7 @@
 #include <SensorLTR553.hpp>
 #include <Wire.h>
 #include <WiFi.h>
-#include <sntp.h>
+#include <esp_sntp.h>
 #include <XPowersLib.h>
 #include "LV_Helper.h"
 #include "ui.h"
@@ -174,7 +174,7 @@ void updatePMU(lv_timer_t *t)
 void updateLightDected(lv_timer_t *t)
 {
     if (autonBrightness) {
-        bool saturated;
+        bool saturated = false;
         Serial.print(" ALS: CH1:"); Serial.print(als.getLightSensor(1));
         Serial.print(" -  CH0:"); Serial.print(als.getLightSensor(0));
         Serial.print(" -  PS:"); Serial.print(als.getProximity(&saturated));

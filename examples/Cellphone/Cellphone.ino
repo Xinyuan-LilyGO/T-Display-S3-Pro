@@ -1,7 +1,7 @@
 #include <SensorLTR553.hpp>
 #include <Wire.h>
 #include <WiFi.h>
-#include <sntp.h>
+#include <esp_sntp.h>
 #include <XPowersLib.h>
 #include "LV_Helper.h"
 #include "ui.h"
@@ -179,12 +179,11 @@ void updateLightDected(lv_timer_t *t)
     int ps_thread = 40; // range: 0 ~ 100
     int ps_time = 2;    // 3 seconds to think there's an object covering the screen
     int ch0, ch1, ps;
-    bool saturated;
+    bool saturated = false;
     static uint32_t cnt = 0;
     static bool cover_flag = false;
 
     if (autonBrightness) {
-        bool saturated;
         Serial.print(" ALS: CH1:"); Serial.print(als.getLightSensor(1));
         Serial.print(" -  CH0:"); Serial.print(als.getLightSensor(0));
         Serial.print(" -  PS:"); Serial.print(als.getProximity(&saturated));

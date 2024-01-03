@@ -170,7 +170,7 @@ void setup()
 
 void loop()
 {
-    bool saturated;
+    bool saturated = false;
 
     uint16_t ch0 = als.getLightSensor(0);
     uint16_t ch1 = als.getLightSensor(1);
