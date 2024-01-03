@@ -57,6 +57,7 @@ be careful not block the top of the "S3-Pro" screen, if it is blocked, the scree
 ## 4️⃣ Arduino IDE Quick Start
 
 * It is recommended to use platformio without cumbersome steps
+* [T-Display-S3-Pro Arduino IDE Record](https://youtu.be/z4w9Qj5ArAw)
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
 2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
@@ -64,10 +65,10 @@ be careful not block the top of the "S3-Pro" screen, if it is blocked, the scree
 4. Copy all folders in [lib folder](./lib/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
   ![setting](images/ArduinoIDE.jpg)
-6. Open `T-Display-S3-Pro` -> `examples` -> `any examples` -> `any eaxmples.ino`
-7. Select `Port`
-8. Click `upload` , Wait for compilation and writing to complete
-9. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
+1. Open `T-Display-S3-Pro` -> `examples` -> `any examples` -> `any eaxmples.ino`
+2. Select `Port`
+3. Click `upload` , Wait for compilation and writing to complete
+4. If it cannot be written, or the USB device keeps flashing, please check the **FAQ** below
 
 
 # 5️⃣ ESP32 basic examples
