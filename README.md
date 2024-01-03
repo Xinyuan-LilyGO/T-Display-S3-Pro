@@ -59,8 +59,8 @@ be careful not block the top of the "S3-Pro" screen, if it is blocked, the scree
 * It is recommended to use platformio without cumbersome steps
 
 1. Install [Arduino IDE](https://www.arduino.cc/en/software)
-2. Install [Arduino ESP32](https://docs.espressif.com/projects/arduino-esp32/en/latest/) 
-3. Download `T-Display-S3-Pro` , move to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
+2. Install [Arduino ESP32 V 2.0.5 or above and below V3.0](https://docs.espressif.com/projects/arduino-esp32/en/latest/)
+3. Download `T-Display-S3-Pro` to Decktop
 4. Copy all folders in [lib folder](./lib/)  to Arduino library folder (e.g. C:\Users\YourName\Documents\Arduino\libraries)
 5. Open ArduinoIDE  ,`Tools` , Look at the picture to choose
   ![setting](images/ArduinoIDE.jpg)
