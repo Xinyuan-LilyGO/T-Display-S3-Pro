@@ -1,11 +1,7 @@
-﻿#ifndef __SCR_MRG_H__
-#define __SCR_MRG_H__
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#pragma once
 #include "lvgl.h"
+#include <Arduino.h>
+#include "ui.h"
 
 #define SCR_MGR_ANIM_TIME 500
 #define SCR_MGR_SCR_SWITCH_ANIM    LV_SCR_LOAD_ANIM_MOVE_TOP
@@ -46,8 +42,3 @@ bool scr_mgr_push(int id, bool anim);
 bool scr_mgr_pop(bool anim);
 
 
-#ifdef __cplusplus
-} /*extern "C"*/
-#endif
-
-#endif /*__SCR_MRG_H__*/

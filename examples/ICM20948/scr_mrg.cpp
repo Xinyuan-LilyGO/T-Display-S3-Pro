@@ -1,4 +1,3 @@
-﻿
 #include "scr_mrg.h"
 
 /* 记录所有的屏幕卡片 */ 
@@ -86,10 +85,10 @@ static void scr_mgr_remove(scr_card_t *card)
  *********************************************************************************/
 void scr_mgr_init(void)
 {
-    scr_mgr_head = lv_mem_alloc(sizeof(scr_card_t));
+    scr_mgr_head = (scr_card_t *)lv_mem_alloc(sizeof(scr_card_t));
     scr_mgr_head->id = -1;
     scr_mgr_head->obj = NULL;
-    scr_mgr_head->st = -1;
+    scr_mgr_head->st = SCR_MGR_STATE_IDLE;
     scr_mgr_head->life = NULL;
     scr_mgr_head->next = NULL;
     scr_mgr_head->prev = NULL;
@@ -107,7 +106,7 @@ bool scr_mgr_register(int id, scr_lifecycle_t *card_life) // 注册一个屏幕�
         return false;
     }
 
-    scr_card_t *new_card = lv_mem_alloc(sizeof(scr_card_t));
+    scr_card_t *new_card = (scr_card_t *)lv_mem_alloc(sizeof(scr_card_t));
     new_card->id = id;
     new_card->obj = NULL;
     new_card->st = SCR_MGR_STATE_IDLE;
@@ -145,7 +144,7 @@ bool scr_mgr_switch(int id, bool anim)  // 清空栈，然后切换到指定 id�
         scr_stack_top = stack_scr;
     }
 
-    stack_scr = lv_mem_alloc(sizeof(scr_card_t));
+    stack_scr = (scr_card_t *)lv_mem_alloc(sizeof(scr_card_t));
     stack_scr->id = tgt_card->id;
     // stack_scr->obj = tgt_card->life->create(NULL);
     stack_scr->obj = scr_mgr_default_style(tgt_card);
@@ -181,7 +180,7 @@ bool scr_mgr_push(int id, bool anim)
         return false;
     }
 
-    stack_scr = lv_mem_alloc(sizeof(scr_card_t));
+    stack_scr = (scr_card_t *)lv_mem_alloc(sizeof(scr_card_t));
     stack_scr->id = tgt_card->id;
     // stack_scr->obj = tgt_card->life->create(NULL);
     stack_scr->obj = scr_mgr_default_style(tgt_card);

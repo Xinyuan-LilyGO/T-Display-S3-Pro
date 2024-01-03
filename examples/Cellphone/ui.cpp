@@ -474,7 +474,7 @@ void prompt_info(char *str, uint16_t time)
 }
 
 char *couter_list[] = {
-    "C", "\\", "*", "Del",
+    "C", "/", "*", "Del",
     "7", "8", "9", "-",
     "4", "5", "6", "+",
     "1", "2", "3", "=",
