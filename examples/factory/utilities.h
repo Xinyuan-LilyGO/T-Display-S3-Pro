@@ -20,6 +20,8 @@
 #define BOARD_I2C_SDA       5
 #define BOARD_I2C_SCL       6
 
+#define VIBRATING_MOTOR  16
+
 // SD , TFT share SPI Bus
 #define BOARD_SPI_MISO      8
 #define BOARD_SPI_MOSI      17
@@ -29,6 +31,7 @@
 #define BOARD_TFT_DC        9
 #define BOARD_TFT_BL        48
 #define BOARD_SD_CS         14
+
 #define BOARD_SENSOR_IRQ    21
 #define BOARD_TOUCH_RST     13
 #define BOARD_TOUCH_IRQ     7

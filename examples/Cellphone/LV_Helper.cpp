@@ -84,7 +84,6 @@ void setBrightness(uint8_t value)
         digitalWrite(BOARD_TFT_BL, 1);
     }
     level = value;
-    Serial.print ("setBrightness : "); Serial.println(level);
 #endif
 }
 

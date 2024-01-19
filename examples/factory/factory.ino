@@ -6,7 +6,23 @@
 #include "LV_Helper.h"
 #include "ui.h"
 #include "utilities.h"
+#include <esp_camera.h>
+#include "ESP32_OV5640_AF.h"
+#include "sd_card.h"
+#include "EEPROM.h"
+/*********************************************************************************
+ *                               EEPROM
+ *********************************************************************************/
+#define EEPROM_SIZE_MAX 5
+#define EEPROM_MAGIC_NUM 0xAA
+#define EEPROM_FRIST_ADDR  0
+#define EEPROM_CAMERA_ADDR 1
+uint8_t eeprom_buf[EEPROM_SIZE_MAX];
 
+extern bool camera_rotation_flag;
+/*********************************************************************************
+ *                              TYPEDEFS
+ *********************************************************************************/
 static SensorLTR553 als;
 static PowersSY6970 PMU;
 static WiFiEvent_t event;
@@ -14,6 +30,46 @@ static QueueHandle_t wifi_setting_queue;
 static EventGroupHandle_t touch_eg;
 static bool hasSensor = false, hasPMU = false;
 static int autonBrightness = 0;
+
+void eeprom_write(int addr, uint8_t val)
+{
+    eeprom_buf[EEPROM_FRIST_ADDR] = EEPROM_MAGIC_NUM;
+    eeprom_buf[addr] = val;
+
+    for(int i = 0; i < EEPROM_SIZE_MAX; i++){
+        EEPROM.write(i, eeprom_buf[i]);
+    }
+    EEPROM.commit();
+    for (int i = 0; i < EEPROM_SIZE_MAX; i++) {
+        Serial.print(byte(EEPROM.read(i))); Serial.print(" ");
+    }
+    Serial.println("");
+}
+
+void eeproom_init(void)
+{
+    if (!EEPROM.begin(EEPROM_SIZE_MAX)) {
+        Serial.println("failed to initialise EEPROM"); delay(1000000);
+    }
+    Serial.println(" bytes read from Flash . Values are:");
+
+    for (int i = 0; i < EEPROM_SIZE_MAX; i++) {
+        eeprom_buf[i] = EEPROM.read(i);
+        Serial.print(byte(EEPROM.read(i))); Serial.print(" ");
+    }
+
+    uint8_t frist_read = eeprom_buf[EEPROM_FRIST_ADDR];
+    Serial.printf(" read = %d\n", frist_read);
+    if(frist_read == EEPROM_MAGIC_NUM){
+        camera_rotation_flag = eeprom_buf[EEPROM_CAMERA_ADDR];
+    }else{
+        lv_memset_00(eeprom_buf, EEPROM_SIZE_MAX);
+        for(int i=0; i < EEPROM_SIZE_MAX; i++){
+            EEPROM.write(i, eeprom_buf[i]);
+        }
+        EEPROM.commit();
+    }
+}
 
 void lv_auto_brightne_cd(void)
 {
@@ -173,14 +229,130 @@ void updatePMU(lv_timer_t *t)
 
 void updateLightDected(lv_timer_t *t)
 {
+    int ps_thread = 40; // range: 0 ~ 100
+    int ps_time = 2;    // 3 seconds to think there's an object covering the screen
+    int ch0, ch1, ps;
+    bool saturated = false;
+    static uint32_t cnt = 0;
+    static bool cover_flag = false;
+
     if (autonBrightness) {
-        bool saturated = false;
         Serial.print(" ALS: CH1:"); Serial.print(als.getLightSensor(1));
         Serial.print(" -  CH0:"); Serial.print(als.getLightSensor(0));
         Serial.print(" -  PS:"); Serial.print(als.getProximity(&saturated));
         Serial.print(" -  "); Serial.println(saturated ? "PS saturated" : "PS not saturated");
+
+        if (!hasSensor)
+        return;
+
+        ch0 = als.getLightSensor(0);
+        ch1 = als.getLightSensor(1);
+        ps = als.getProximity(&saturated);
+
+        if(ps > ps_thread){
+            if(!cover_flag){
+                cnt++;
+                if(cnt * t->period > ps_time * 1000){
+                    digitalWrite(BOARD_TFT_BL, 0);
+                    delay(3);
+                    cnt = 0;
+                    cover_flag = true;
+                }
+            }
+        } else {
+            if(cover_flag){
+                cnt++;
+                if(cnt * t->period > ps_time * 1000){
+                    digitalWrite(BOARD_TFT_BL, 1);
+                    delay(3);
+                    cnt = 0;
+                    cover_flag = false;
+                }
+            }else{
+                cnt = 0;
+            }
+        }
     }
 }
+
+camera_config_t config;
+OV5640 ov5640 = OV5640();
+void camera_init(void)
+{
+    config.ledc_channel = LEDC_CHANNEL_0;
+    config.ledc_timer = LEDC_TIMER_0;
+    config.pin_d0 = CAMERA_PIN_Y2;
+    config.pin_d1 = CAMERA_PIN_Y3;
+    config.pin_d2 = CAMERA_PIN_Y4;
+    config.pin_d3 = CAMERA_PIN_Y5;
+    config.pin_d4 = CAMERA_PIN_Y6;
+    config.pin_d5 = CAMERA_PIN_Y7;
+    config.pin_d6 = CAMERA_PIN_Y8;
+    config.pin_d7 = CAMERA_PIN_Y9;
+    config.pin_xclk = CAMERA_PIN_XCLK;
+    config.pin_pclk = CAMERA_PIN_PCLK;
+    config.pin_vsync = CAMERA_PIN_VSYNC;
+    config.pin_href = CAMERA_PIN_HREF;
+    config.pin_sccb_sda = CAMERA_PIN_SIOD;
+    config.pin_sccb_scl = CAMERA_PIN_SIOC;
+    config.pin_pwdn = CAMERA_PIN_PWDN;
+    config.pin_reset = CAMERA_PIN_RESET;
+    config.xclk_freq_hz = XCLK_FREQ_HZ;
+#if UI_CAMERA_CANVAS 
+    config.pixel_format = PIXFORMAT_RGB565;
+    config.frame_size = FRAMESIZE_240X240;
+    config.jpeg_quality = 10;
+    config.fb_count = 1;
+#else
+    config.pixel_format = PIXFORMAT_JPEG;
+    config.frame_size = FRAMESIZE_HQVGA;
+    config.jpeg_quality = 15;
+    config.fb_count = 1;
+#endif
+    config.fb_location = CAMERA_FB_IN_PSRAM;
+    config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
+
+    esp_err_t err = esp_camera_init(&config);
+    if (err != ESP_OK) {
+        Serial.println("camera init error!");
+    }
+    sensor_t *s = esp_camera_sensor_get();
+
+    if (s) {
+        Serial.print("camera id:");
+        Serial.println(s->id.PID);
+        camera_sensor_info_t *sinfo = esp_camera_sensor_get_info(&(s->id));
+        if (sinfo) {
+            Serial.print("camera model:");
+            Serial.println(sinfo->name);
+        }
+        if (s->id.PID == GC0308_PID) {
+            s->set_vflip(s, 0); // This can't flip the picture vertically. Watch out!
+            s->set_hmirror(s, 0);
+        }else if (s->id.PID == OV5640_PID){
+            ov5640.start(s);
+            if (ov5640.focusInit() == 0) {
+                Serial.println("OV5640_Focus_Init Successful!");
+            }
+
+            if (ov5640.autoFocusMode() == 0) {
+                Serial.println("OV5640_Auto_Focus Successful!");
+            }
+            s->set_vflip(s, 1);
+            s->set_hmirror(s, 0);
+        }
+    }
+
+    // Initialize Camera LED
+    // Adjust the LED duty cycle to save power and heat.
+    // If you directly set the LED to HIGH, the heat brought by the LED will be huge,
+    // and the current consumption will also be huge.
+    ledcSetup(LEDC_WHITE_CH, 1000, 8);
+    ledcAttachPin(CAMERA_WHITH_LED, LEDC_WHITE_CH);
+    ledcWrite(LEDC_WHITE_CH, 0);
+    // ledcWrite(LEDC_WHITE_CH, 20);
+}
+
 
 void setup()
 {
@@ -188,6 +360,12 @@ void setup()
     wifi_setting_queue = xQueueCreate(5, sizeof(uint16_t));
 
     Serial.begin(115200);
+
+    eeproom_init();
+
+    // vibrating motor init
+    pinMode(VIBRATING_MOTOR, OUTPUT);
+    digitalWrite(VIBRATING_MOTOR, LOW);
 
     WiFi.disconnect(true);
     WiFi.onEvent(WiFiEvent);
@@ -197,6 +375,7 @@ void setup()
     const char *tz  = "CST-8";                  //timezone
     configTzTime(tz, ntpServer1, ntpServer2);
 
+    camera_init();
 
     hasPMU =  PMU.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL, SY6970_SLAVE_ADDRESS);
     if (!hasPMU) {
@@ -211,6 +390,8 @@ void setup()
 
     lv_helper();
 
+    sd_card_init();
+
     lv_touch_homekey_set_cb(return_home_cd);
 
     ui_init();
@@ -218,9 +399,8 @@ void setup()
     lv_timer_create(updatePMU, 1000, NULL);
 
     // TODO:
-    // lv_timer_create(updateLightDected, 500, NULL);
+    lv_timer_create(updateLightDected, 500, NULL);
 }
-
 
 void loop()
 {

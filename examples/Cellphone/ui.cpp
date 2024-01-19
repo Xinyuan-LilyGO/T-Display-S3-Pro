@@ -154,34 +154,13 @@ lv_obj_t *ui_wifionlabel = NULL;
 lv_obj_t *ui_menudown = NULL;
 lv_obj_t *ui_menudowntop = NULL;
 lv_obj_t *ui_wifibtn = NULL;
+lv_obj_t *ui_camera = NULL;
 lv_obj_t *ui_cameratext = NULL;
 lv_obj_t *ui_controlCenter = NULL;
 lv_obj_t *ui_controlListener = NULL;
 lv_obj_t *ui_setting = NULL;
 lv_obj_t *ui_settings = NULL;
 lv_obj_t *ui_wifiset = NULL;
-
-lv_obj_t *ui_camera = NULL;
-#if UI_CAMERA_CANVAS 
-lv_obj_t *ui_camera_canvas = NULL;
-#else
-lv_obj_t *ui_camera_img = NULL;
-lv_img_dsc_t img_canvas_src;
-#endif
-lv_timer_t *camera_timer = NULL;
-bool camera_get_photo_flag = false;
-bool camera_led_open_flag = false;
-bool camera_rotation_flag = false;
-
-lv_obj_t *ui_photos = NULL;
-lv_obj_t *ui_photos_list = NULL;
-lv_obj_t *ui_photos_img_src = NULL;
-lv_obj_t *ui_photos_img = NULL;
-lv_obj_t *ui_photos_gif = NULL;
-lv_obj_t *ui_photos_mbox = NULL;
-
-lv_obj_t *ui_counter = NULL;
-lv_obj_t * counter_textarea;
 
 lv_obj_t *ui_aboutui = NULL;
 lv_obj_t *ui_datetimeui = NULL;
@@ -451,266 +430,6 @@ void closeControl_Animation(lv_obj_t* TargetObject, int delay)
 
 }
 */
-//************************************************************************************************************************************
-bool prompt_is_busy = false;
-
-void prompt_label_timer(lv_timer_t *t)
-{
-    lv_obj_del((lv_obj_t *)t->user_data);
-    lv_timer_del(t);
-    prompt_is_busy = false;
-}
-
-void prompt_info(char *str, uint16_t time)
-{
-    if(prompt_is_busy == false){
-        lv_obj_t *lable = lv_label_create(lv_layer_top());
-        lv_label_set_text(lable, str);
-        lv_obj_set_style_bg_opa(lable, LV_OPA_COVER, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(lable, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-        lv_obj_center(lable);
-        lv_timer_create(prompt_label_timer, time, lable);
-        prompt_is_busy = true;
-    }
-}
-
-char *couter_list[] = {
-    "C", "/", "*", "Del",
-    "7", "8", "9", "-",
-    "4", "5", "6", "+",
-    "1", "2", "3", "=",
-    "%", "0", ".",
-};
-
-void ui_event_facetime(lv_event_t *e)
-{
-    prompt_info("facetime cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_mail(lv_event_t *e)
-{
-    prompt_info("main cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_music(lv_event_t *e)
-{
-    prompt_info("music cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_notes(lv_event_t *e)
-{
-    prompt_info("notes cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_books(lv_event_t *e)
-{
-    prompt_info("books cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_contacts(lv_event_t *e)
-{
-    prompt_info("contacts cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_store(lv_event_t *e)
-{
-    prompt_info("store cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_find_my(lv_event_t *e)
-{
-    prompt_info("find_my cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_clock(lv_event_t *e)
-{
-    prompt_info("clock cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_podcasts(lv_event_t *e)
-{
-    prompt_info("podcasts cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_safari(lv_event_t *e)
-{
-    prompt_info("safari cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_shortcuts(lv_event_t *e)
-{
-    prompt_info("shortcuts cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_stocks(lv_event_t *e)
-{
-    prompt_info("stocks cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_files(lv_event_t *e)
-{
-    prompt_info("clock cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_message(lv_event_t *e)
-{
-    prompt_info("message cannot be used", UI_PROMPT_TIME);
-}
-
-void ui_event_phone(lv_event_t *e)
-{
-    prompt_info("phone cannot be used", UI_PROMPT_TIME);
-}
-
-static void ui_photos_img_src_event(lv_event_t *e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    if(code == LV_EVENT_CLICKED) {
-        lv_scr_load(ui_photos);
-    }
-}
-
-static void delete_img_event_cb(lv_event_t * e)
-{
-    lv_obj_t * obj = lv_event_get_current_target(e);
-    char *user_data = (char *)lv_event_get_user_data(e);
-    char *operate = (char *)lv_msgbox_get_active_btn_text(obj);
-
-    if(strcmp(operate, "confirm") == 0){
-        sd_card_remove(user_data);
-        lv_scr_load(ui_photos);
-    }else if(strcmp(operate, "cancel") == 0){
-        lv_scr_load(ui_photos);
-    }
-    lv_obj_del(obj);
-}
-
-static void ui_photos_list_event(lv_event_t *e)
-{   
-    static char path[32];
-    static lv_event_code_t prev_code = LV_EVENT_ALL;
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * obj = lv_event_get_target(e);
-    char *file_name = (char *)lv_list_get_btn_text(ui_photos_list, obj);
-    uint16_t file_name_len = strlen(file_name);
-    char *suffix = file_name + file_name_len - 3;
-    
-    
-    if(code == LV_EVENT_CLICKED) {
-        if(prev_code == LV_EVENT_LONG_PRESSED){
-            prev_code = LV_EVENT_ALL;
-            return;
-        }
-
-        lv_snprintf(path, 32, "S:/%s", file_name);
-        int picture_type = -1;
-        picture_type = strcmp(suffix, "jpg") == 0 ? 1 : picture_type;
-        picture_type = strcmp(suffix, "png") == 0 ? 2 : picture_type;
-        picture_type = strcmp(suffix, "bmp") == 0 ? 3 : picture_type;
-        picture_type = strcmp(suffix, "gif") == 0 ? 4 : picture_type;
-
-        lv_obj_clear_flag(ui_photos_gif, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_flag(ui_photos_img, LV_OBJ_FLAG_HIDDEN);
-    
-        switch (picture_type) {
-            case 1: // jpg
-            case 2: // png
-            case 3: // bmp
-                lv_obj_set_style_transform_angle(ui_photos_img, 0, 0);
-                lv_img_set_src(ui_photos_img, path);
-                lv_obj_add_flag(ui_photos_gif, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(ui_photos_img, LV_OBJ_FLAG_HIDDEN);
-                lv_scr_load(ui_photos_img_src);
-                break;
-            case 4: // gif
-                lv_gif_set_src(ui_photos_gif, path);
-                lv_obj_clear_flag(ui_photos_gif, LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(ui_photos_img, LV_OBJ_FLAG_HIDDEN);
-                lv_scr_load(ui_photos_img_src);
-                break;
-            default:
-                break;
-        }
-        Serial.println(path);
-
-    }else if(code == LV_EVENT_LONG_PRESSED) {
-        static const char * btns[] = {"confirm", "cancel", ""};
-        char prompt_buf[48];
-        prev_code = LV_EVENT_LONG_PRESSED;
-        lv_snprintf(prompt_buf, 48, "Do you want to delete %s", file_name);
-        lv_snprintf(path, 32, "%s%s", TARGET_FOLDER, file_name);
-        ui_photos_mbox = lv_msgbox_create(ui_photos_img_src, "Info", prompt_buf, btns, true);
-        lv_obj_add_event_cb(ui_photos_mbox, delete_img_event_cb, LV_EVENT_VALUE_CHANGED, path);
-        lv_obj_center(ui_photos_mbox);
-        lv_scr_load(ui_photos_img_src);
-        lv_obj_add_flag(ui_photos_gif, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_add_flag(ui_photos_img, LV_OBJ_FLAG_HIDDEN);
-    }
-}
-
-static void ui_event_photos(lv_event_t *e)
-{
-#define FILE_INFO_MAX 18
-
-    if(sd_card_get_init_flag() == false){
-        Serial.println("No find SD card!");
-        prompt_info("No find SD card!", UI_PROMPT_TIME);
-        return;
-    }
-
-    lv_event_code_t event_code = lv_event_get_code(e);
-
-    if(ui_photos_list != NULL){
-        lv_obj_del(ui_photos_list);
-        ui_photos_list = NULL;
-    }
-    ui_photos_list = lv_list_create(ui_photos);
-    lv_obj_set_size(ui_photos_list, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_radius(ui_photos_list, 0, 0);
-    lv_obj_set_style_pad_row(ui_photos_list, 10, 0);
-    lv_obj_center(ui_photos_list);
-
-    /*Add buttons to the list*/
-    lv_obj_t *obj = lv_list_add_text(ui_photos_list, "File");
-    lv_obj_set_height(obj, 40);
-    lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, 0);
-    lv_obj_set_style_pad_top(obj, 12, 0);
-    
-    if (event_code == LV_EVENT_PRESSED) {
-        char buf[FILE_INFO_MAX];
-
-        File root = SD_FD_DRI.open(TARGET_FOLDER);
-        if(!root){
-            Serial.println("Failed to open directory");
-            prompt_info("Failed to open directory", UI_PROMPT_TIME);
-            return;
-        }
-        if(!root.isDirectory()){
-            Serial.println("Not a directory");
-            prompt_info("Not a directory", UI_PROMPT_TIME);
-            return;
-        }
-
-        File file = root.openNextFile();
-        while(file){
-            lv_obj_t *btn;
-
-            lv_snprintf(buf, FILE_INFO_MAX, "%s", file.name());
-            if(file.isDirectory()){
-                btn = lv_list_add_btn(ui_photos_list, LV_SYMBOL_DIRECTORY, buf);
-            }
-            else 
-                btn = lv_list_add_btn(ui_photos_list, LV_SYMBOL_FILE, buf);
-            lv_obj_add_event_cb(btn, ui_photos_list_event, LV_EVENT_CLICKED, NULL);
-            lv_obj_add_event_cb(btn, ui_photos_list_event, LV_EVENT_LONG_PRESSED, NULL);
-            file = root.openNextFile();
-        }
-        // _ui_screen_change(ui_photos, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0);
-        lv_scr_load(ui_photos);
-    }
-#undef FILE_INFO_MAX
-}
-
 static void ui_event_settings(lv_event_t *e)
 {
     lv_event_code_t event_code = lv_event_get_code(e);
@@ -722,200 +441,6 @@ static void ui_event_settings(lv_event_t *e)
         _ui_screen_change(ui_setting, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0);
     }
 }
-
-extern "C" {
-
-void counter_event_cb(lv_event_t *t)
-{
-    char c = ((char *)t->user_data)[0];
-    char buf[32];
-    static double num1 = 0;
-    static double num2 = 0;
-    static char opt = 0;
-    static double result = 0;
-
-    if(c >= '0' && c <= '9'){
-        lv_textarea_add_char(counter_textarea, c);
-        if(opt == 0){
-            num1 = num1 * 10 + (c - '0');
-        }
-        else {
-            num2 = num2 * 10 + (c - '0');
-        }
-    }
-
-    switch (c) {
-    case '+': opt = '+'; lv_textarea_add_char(counter_textarea, c); break;
-    case '-': opt = '-'; lv_textarea_add_char(counter_textarea, c); break;
-    case '*': opt = '*'; lv_textarea_add_char(counter_textarea, c); break;
-    case '/': opt = '/'; lv_textarea_add_char(counter_textarea, c); break;
-    case '=':{
-        lv_textarea_add_char(counter_textarea, c);
-        switch (opt)
-        {
-            case '+': result = num1 + num2; break;
-            case '-': result = num1 - num2; break;
-            case '*': result = num1 * num2; break;
-            case '/': result = num1 / num2; break;
-            default:
-                break;
-        }
-        uint16_t low_num = (int)(result * 100) % 100;
-
-        if(low_num == 0){
-            lv_snprintf(buf, 32, "%d", (int)result);
-        }else{
-            lv_snprintf(buf, 32, "%d.%d", (int)result, low_num);
-        }
-        lv_textarea_add_text(counter_textarea, buf);
-        printf("resule=%lf\n", result);
-    }
-        break;
-    case 'D':
-        lv_textarea_del_char(counter_textarea);
-        break;
-    case 'C':
-        uint32_t max_length = lv_textarea_get_cursor_pos(counter_textarea);
-        for(int i = 0; i < max_length; i++){
-            lv_textarea_del_char(counter_textarea);
-        }
-        num1 = 0;
-        num2 = 0;
-        opt = 0;
-        result = 0;
-        break;
-    // case '%':
-    //     break;
-    // case '.':
-    //     break;
-    
-    // default:
-    //     break;
-    }
-
-    if(t->code == LV_EVENT_CLICKED){
-        // prompt_info((char *)t->user_data, UI_PROMPT_TIME);
-    }
-}
-}
-
-
-static void ui_event_counter(lv_event_t *e)
-{
-    lv_scr_load(ui_counter);
-}
-
-
-void cmaera_async_play(void *p)
-{
-}
-
-static void px_swap(uint8_t *a, uint8_t *b)
-{
-    uint8_t c = *a;
-    *a = *b;
-    *b = c;
-}
-
-static void camera_video_play(lv_timer_t *t)
-{
-    // lv_async_call(cmaera_async_play, NULL);
-    camera_fb_t *frame = esp_camera_fb_get();
-    if (frame){
-        sensor_t *s = esp_camera_sensor_get();
-        ESP_LOGI("", "id=%d, w=%d, h=%d, len=%d", s->id.PID, frame->width, frame->height, frame->len);
-#if UI_CAMERA_CANVAS 
-
-        if(camera_rotation_flag == true){
-            for(int i = 0; i < frame->len / 2; i++){
-                px_swap(&frame->buf[i], &frame->buf[frame->len-i]);
-            }
-        }
-        
-        lv_canvas_set_buffer(ui_camera_canvas, frame->buf, frame->height, frame->width, LV_IMG_CF_TRUE_COLOR);
-#else
-        img_canvas_src.header.cf = LV_IMG_CF_RAW;
-        img_canvas_src.header.always_zero = 0;
-        img_canvas_src.header.reserved = 0;
-        img_canvas_src.header.w = frame->width;
-        img_canvas_src.header.h = frame->height;
-        img_canvas_src.data_size = frame->len;
-        img_canvas_src.data = frame->buf;
-        if(frame->len < 5000)
-            lv_img_set_src(ui_camera_img, &img_canvas_src);
-#endif
-        if(camera_get_photo_flag){
-            camera_get_photo_flag = false;
-            if(camera_led_open_flag){
-                ledcWrite(LEDC_WHITE_CH, 20);
-                delay(400);
-                ledcWrite(LEDC_WHITE_CH, 0);
-            }
-            
-            if(sd_card_get_init_flag()){
-                static uint16_t img_idx = 1000;
-                char path[32];
-                lv_snprintf(path,32, "%s%s%d%s", TARGET_FOLDER, "/img", img_idx++, ".bmp");
-                // sd_card_write(path, frame->buf, frame->len);
-                // sd_card_bmp_img(path, frame->width, frame->height, frame->buf);
-                sd_card_bmp_lvgl(path, frame->width, frame->height, ui_camera_canvas);
-            }else{
-                Serial.println("No find SD card!");
-                prompt_info("No find SD card!", UI_PROMPT_TIME);
-            }
-        }
-        esp_camera_fb_return(frame);
-    }
-}
-
-void open_camera_cb(lv_event_t *e)
-{
-    static bool click_verse = false;
-    int data = (int)lv_event_get_user_data(e);
-
-#define CAMERA_TAKE 1
-#define CAMERA_LED 2
-#define CAMERA_AF 3
-#define SAVE_TO_SD_CARD 4
-
-    if (data == CAMERA_TAKE){
-        camera_get_photo_flag = true;
-    }
-
-    if(data == CAMERA_LED)
-        camera_led_open_flag = !camera_led_open_flag;
-
-    if(data == CAMERA_AF) {
-        extern OV5640 ov5640;
-        uint8_t rc = ov5640.getFWStatus();
-        if (rc == -1) {
-            Serial.println("Check your OV5640");
-        } else if (rc == FW_STATUS_S_FOCUSED) {
-            Serial.println("Focused!");
-        } else if (rc == FW_STATUS_S_FOCUSING) {
-            Serial.println("Focusing!");
-        } else {
-            Serial.println("Autofoucs succeed!");
-        }
-    }
-
-    if(data == SAVE_TO_SD_CARD){
-        camera_rotation_flag = !camera_rotation_flag;
-        eeprom_write(1, byte(camera_rotation_flag));
-    }
-}
-
-static void ui_event_camera(lv_event_t *e)
-{
-    lv_event_code_t event_code = lv_event_get_code(e);
-    if (event_code == LV_EVENT_PRESSED) {
-            Serial.println("camera icon is clicked");
-        _ui_screen_change(ui_camera, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0);
-        if(camera_timer)
-            lv_timer_resume(camera_timer);
-    }
-}
-//************************************************************************************************************************************
 /*
 void showControl_Animation(lv_obj_t* TargetObject, int delay)
 {
@@ -1213,6 +738,7 @@ static void show_wifiName(lv_obj_t *parent, int len)
         y += 40;
         lv_obj_add_event_cb(ui_wifilist, ui_event_wifilistname, LV_EVENT_ALL, NULL);
     }
+
 }
 
 void wifi_connect_cd(void)
@@ -2518,135 +2044,6 @@ void ui_setting_screen_init(void)
     lv_obj_add_event_cb(ui_setting, ui_event_setting, LV_EVENT_ALL, NULL);
 }
 
-void ui_camera_screen_init(void)
-{
-    ui_camera = lv_obj_create(NULL);
-    lv_obj_clear_flag(ui_camera, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_style_radius(ui_camera, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_color(ui_camera, lv_color_black(), LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_opa(ui_camera, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-    lv_obj_t * btn = lv_btn_create(ui_camera);
-    lv_obj_set_size(btn, 140, 80);
-    lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -20);
-    lv_obj_add_event_cb(btn, open_camera_cb, LV_EVENT_CLICKED, (void *)1);
-    lv_obj_t *label = lv_label_create(btn);
-    lv_label_set_text(label, "camera");
-    lv_obj_center(label);
-
-    lv_obj_t *btn1 = lv_btn_create(ui_camera);
-    lv_obj_set_size(btn1, 60, 60);
-    lv_obj_add_flag(btn1, LV_OBJ_FLAG_CHECKABLE);
-    lv_obj_align(btn1, LV_ALIGN_LEFT_MID, 20, 90);
-    lv_obj_add_event_cb(btn1, open_camera_cb, LV_EVENT_CLICKED, (void *)2);
-    label = lv_label_create(btn1);
-    lv_label_set_text(label, "FL");
-    lv_obj_center(label);
-
-    lv_obj_t *btn2 = lv_btn_create(ui_camera);
-    lv_obj_set_size(btn2, 60, 60);
-    lv_obj_align_to(btn2, btn1, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
-    lv_obj_add_event_cb(btn2, open_camera_cb, LV_EVENT_CLICKED, (void *)3);
-    label = lv_label_create(btn2);
-    lv_label_set_text(label, "AF");
-    lv_obj_center(label);
-
-    lv_obj_t *btn3 = lv_btn_create(ui_camera);
-    lv_obj_set_size(btn3, 60, 60);
-    lv_obj_align_to(btn3, btn2, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
-    lv_obj_add_event_cb(btn3, open_camera_cb, LV_EVENT_CLICKED, (void *)4);
-    label = lv_label_create(btn3);
-    lv_label_set_text(label, "Rotate");
-    lv_obj_center(label);
-#if UI_CAMERA_CANVAS  
-    ui_camera_canvas = lv_canvas_create(ui_camera);
-    lv_obj_align(ui_camera_canvas, LV_ALIGN_CENTER, 0, -80);
-#else
-    ui_camera_img = lv_img_create(ui_camera);
-    lv_obj_align(ui_camera_img, LV_ALIGN_CENTER, 0, -80);
-#endif
-    camera_timer = lv_timer_create(camera_video_play, 50, NULL);
-    lv_timer_ready(camera_timer);
-    lv_timer_pause(camera_timer);
-}
-
-void ui_photos_screen_init(void)
-{
-    ui_photos = lv_obj_create(NULL);
-    lv_obj_set_size(ui_photos, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_bg_color(ui_photos, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_pad_all(ui_photos, 0, 0);
-    lv_obj_set_style_radius(ui_photos, 0, 0);
-    lv_obj_clear_flag(ui_photos, LV_OBJ_FLAG_SCROLLABLE);
-
-    ui_photos_img_src = lv_obj_create(NULL);
-    lv_obj_set_size(ui_photos_img_src, lv_pct(100), lv_pct(100));
-    lv_obj_set_style_bg_color(ui_photos_img_src, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_pad_all(ui_photos_img_src, 0, 0);
-    lv_obj_set_style_radius(ui_photos_img_src, 0, 0);
-    lv_obj_clear_flag(ui_photos_img_src, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_add_flag(ui_photos_img_src, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_add_event_cb(ui_photos_img_src, ui_photos_img_src_event, LV_EVENT_CLICKED, NULL);
-
-    ui_photos_img = lv_img_create(ui_photos_img_src);
-    lv_obj_center(ui_photos_img);
-
-    ui_photos_gif = lv_gif_create(ui_photos_img_src);
-    lv_obj_center(ui_photos_gif);
-}
-
-void ui_counter_screen_init(void)
-{
-    static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-    static lv_coord_t row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-
-    /*Create a container with grid*/
-    ui_counter = lv_obj_create(NULL);
-    lv_obj_set_size(ui_counter, lv_pct(100), lv_pct(100));
-
-    lv_obj_t * cont = lv_obj_create(ui_counter);
-    lv_obj_set_style_grid_column_dsc_array(cont, col_dsc, 0);
-    lv_obj_set_style_grid_row_dsc_array(cont, row_dsc, 0);
-    lv_obj_set_size(cont, BOARD_TFT_WIDTH, BOARD_TFT_HEIHT * 0.63);
-    lv_obj_align(cont, LV_ALIGN_BOTTOM_MID, 0, 0);
-    lv_obj_set_style_radius(cont, 0, 0);
-    lv_obj_set_layout(cont, LV_LAYOUT_GRID);
-
-    lv_obj_t * label;
-    lv_obj_t * obj;
-
-    uint32_t i;
-
-    for(i = 0; i < sizeof(couter_list) / sizeof(couter_list[0]); i++){
-        uint8_t col = i % 4;
-        uint8_t row = i / 4;
-        
-        obj = lv_btn_create(cont);
-        if(strcmp(couter_list[i], "=") == 0){
-            lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, col, 1,
-                             LV_GRID_ALIGN_STRETCH, row, 2);
-        }else{
-            lv_obj_set_grid_cell(obj, LV_GRID_ALIGN_STRETCH, col, 1,
-                             LV_GRID_ALIGN_STRETCH, row, 1);
-        }
-        lv_obj_add_event_cb(obj, counter_event_cb, LV_EVENT_CLICKED, (void *)couter_list[i]);
-
-        label = lv_label_create(obj);
-        // lv_label_set_text_fmt(label, "c%d, r%d", col, row);
-        lv_label_set_text(label, couter_list[i]);
-        lv_obj_center(label);
-    }
-
-    counter_textarea = lv_textarea_create(ui_counter);
-    lv_obj_align(counter_textarea, LV_ALIGN_TOP_LEFT, 10, 10);
-    lv_textarea_set_placeholder_text(counter_textarea, "Input");
-    lv_obj_set_size(counter_textarea, BOARD_TFT_WIDTH, BOARD_TFT_HEIHT * 0.38);
-    lv_obj_align(counter_textarea, LV_ALIGN_TOP_MID, 0, 0);
-    lv_obj_set_style_radius(counter_textarea, 0, 0);
-    lv_event_send(counter_textarea, LV_EVENT_FOCUSED, NULL);
-    lv_textarea_set_cursor_click_pos(counter_textarea, false);
-}
-
 void ui_home_create(lv_obj_t **ui_home, lv_obj_t *parent)
 {
     *ui_home = lv_obj_create(parent);
@@ -2696,8 +2093,6 @@ void wifi_button_cd(lv_event_t *e)
 
 void return_home_cd(void *)
 {
-    if(camera_timer)
-        lv_timer_pause(camera_timer);
     _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_NONE, 200, 0);
 }
 
@@ -2709,44 +2104,6 @@ static void auto_brightne_button_cd(lv_event_t *e)
 #if !WIN
     lv_auto_brightne_cd();
 #endif
-}
-
-void camera_open_btn_cb(lv_event_t *e)
-{
-    _ui_screen_change(ui_camera, LV_SCR_LOAD_ANIM_NONE, 0, 0);
-}
-
-void flashlight_btn_cb(lv_event_t *e)
-{
-    int n = (int)lv_event_get_user_data(e);
-    static bool light_flag = false;
-
-    if(!light_flag)
-        ledcWrite(LEDC_WHITE_CH, 20);
-    else
-        ledcWrite(LEDC_WHITE_CH, 0);
-
-    light_flag = !light_flag;
-
-    Serial.println(n);
-    // Serial.println("flashlight");
-}
-
-static void slider_event_cb(lv_event_t * e)
-{
-    lv_obj_t *label = (lv_obj_t *)lv_event_get_user_data(e);
-    lv_obj_t * slider = lv_event_get_target(e);
-    char buf[32];
-
-    if(label != NULL){
-        int val = (int)lv_slider_get_value(slider);
-        lv_snprintf(buf, sizeof(buf), "vibtsting motor %d%%", val);
-        lv_label_set_text(label, buf);
-        lv_obj_align_to(label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-        analogWrite(VIBRATING_MOTOR, lv_map(val, 0, 100, 0, 255));
-        if(val < 10)
-            digitalWrite(VIBRATING_MOTOR, LOW);
-    }
 }
 
 static const lv_img_dsc_t *imgs[4] = {
@@ -2845,16 +2202,16 @@ void ui_init(void)
     lv_obj_set_width(ui_home1, 222);
     lv_obj_set_height(ui_home1, 360);
     lv_obj_set_align(ui_home1, LV_ALIGN_TOP_LEFT);
-    backgBut_explain(ui_home1, NULL, (char *)"facetime", ui_event_facetime, (void *)1, &app_facetime_img, -2, 0);
-    backgBut_explain(ui_home1, NULL, (char *)"mail", ui_event_mail, (void *)1, &app_mail_img, 64, 0);
-    backgBut_explain(ui_home1, NULL, (char *)"music", ui_event_music, (void *)1, &app_music_img, 130, 0);
-    backgBut_explain(ui_home1, NULL, (char *)"notes", ui_event_notes, (void *)1, &app_notes_img, -2, 90);
-    backgBut_explain(ui_home1, NULL, (char *)"photos", ui_event_photos, (void *)1, &app_photos_img, 64, 90);
-    backgBut_explain(ui_home1, NULL, (char *)"settings", ui_event_settings, (void *)1, &app_settings_img, 130, 90);
-    backgBut_explain(ui_home1, NULL, (char *)"books", ui_event_books, (void *)1, &app_books_img, -2, 180);
+    backgBut_explain(ui_home1, NULL, (char *)"facetime", NULL, (void *)1, &app_facetime_img, -2, 0);
+    backgBut_explain(ui_home1, NULL, (char *)"mail", NULL, (void *)1, &app_mail_img, 64, 0);
+    backgBut_explain(ui_home1, NULL, (char *)"music", NULL, (void *)1, &app_music_img, 130, 0);
+    backgBut_explain(ui_home1, NULL, (char *)"notes", NULL, (void *)1, &app_notes_img, -2, 90);
+    backgBut_explain(ui_home1, NULL, (char *)"photos", NULL, (void *)1, &app_photos_img, 64, 90);
+    backgBut_explain(ui_home1, &ui_settings, (char *)"settings", ui_event_settings, (void *)1, &app_settings_img, 130, 90);
+    backgBut_explain(ui_home1, NULL, (char *)"books", NULL, (void *)1, &app_books_img, -2, 180);
     //backgBut_explain(ui_home1, NULL, (char*)"calculator", NULL, (void*)1, &app_calculator_img, 64, 180);
-    backgBut_explain(ui_home1, NULL, (char *)"counter", ui_event_counter, (void *)1, &app_calculator_img, 64, 180);
-    backgBut_explain(ui_home1, NULL, (char *)"contacts", ui_event_contacts, (void *)1, &app_contacts_img, 130, 180);
+    backgBut_explain(ui_home1, NULL, (char *)"counter", NULL, (void *)1, &app_calculator_img, 64, 180);
+    backgBut_explain(ui_home1, NULL, (char *)"contacts", NULL, (void *)1, &app_contacts_img, 130, 180);
     //backgBut_explain(ui_home1, NULL, (char*)"camera", NULL, (void*)1, &app_camera_img, 130, 180);
 
     ui_home_create(&ui_home2, ui_body);
@@ -2863,16 +2220,16 @@ void ui_init(void)
     lv_obj_set_x(ui_home2, 222);
     lv_obj_set_y(ui_home2, 0);
     lv_obj_set_align(ui_home2, LV_ALIGN_CENTER);
-    backgBut_explain(ui_home2, NULL, (char *)"store", ui_event_store, (void *)1, &app_store_img, -2, 0);
-    backgBut_explain(ui_home2, NULL, (char *)"find_my", ui_event_find_my, (void *)1, &app_find_my_img, 64, 0);
-    backgBut_explain(ui_home2, NULL, (char *)"clock", ui_event_clock, (void *)1, &app_clock_img, 130, 0);
-    backgBut_explain(ui_home2, NULL, (char *)"podcasts", ui_event_podcasts, (void *)1, &app_podcasts_img, -2, 90);
-    backgBut_explain(ui_home2, NULL, (char *)"safari", ui_event_safari, (void *)1, &app_safari_img, 64, 90);
-    backgBut_explain(ui_home2, NULL, (char *)"shortcuts", ui_event_shortcuts, (void *)1, &app_shortcuts_img, 130, 90);
-    backgBut_explain(ui_home2, NULL, (char *)"stocks", ui_event_stocks, (void *)1, &app_stocks_img, -2, 180);
-    backgBut_explain(ui_home2, NULL, (char *)"files", ui_event_files, (void *)1, &app_files_img, 64, 180);
-    //backgBut_explain(ui_home2, NULL, (char*)"voice memos", NULL, (void*)1, &app_voice_memos_img, 64, 180);
+    backgBut_explain(ui_home2, NULL, (char *)"store", NULL, (void *)1, &app_store_img, -2, 0);
     //backgBut_explain(ui_home2, NULL, (char*)"apple tv", NULL, (void*)1, &app_tv_img, 64, 0);
+    backgBut_explain(ui_home2, NULL, (char *)"find_my", NULL, (void *)1, &app_find_my_img, 64, 0);
+    backgBut_explain(ui_home2, NULL, (char *)"clock", NULL, (void *)1, &app_clock_img, 130, 0);
+    backgBut_explain(ui_home2, NULL, (char *)"podcasts", NULL, (void *)1, &app_podcasts_img, -2, 90);
+    backgBut_explain(ui_home2, NULL, (char *)"safari", NULL, (void *)1, &app_safari_img, 64, 90);
+    backgBut_explain(ui_home2, NULL, (char *)"shortcuts", NULL, (void *)1, &app_shortcuts_img, 130, 90);
+    backgBut_explain(ui_home2, NULL, (char *)"stocks", NULL, (void *)1, &app_stocks_img, -2, 180);
+    //backgBut_explain(ui_home2, NULL, (char*)"voice memos", NULL, (void*)1, &app_voice_memos_img, 64, 180);
+    backgBut_explain(ui_home2, NULL, (char *)"files", NULL, (void *)1, &app_files_img, 64, 180);
 
     ui_footer = lv_obj_create(ui_home);
     lv_obj_set_width(ui_footer, 222);
@@ -2889,9 +2246,9 @@ void ui_init(void)
 
     //backgBut_explain(ui_home, NULL, (char*)"Phone", NULL, (void *)1, &app_Phone_img, 18, 400);
     //backgBut_explain(ui_home, NULL, (char*)"message", NULL, (void *)1, &app_message_img, 86, 400);
-    backgBut_explain(ui_home, NULL, NULL, ui_event_phone, (void *)1, &app_Phone_img, 18, 410);
-    backgBut_explain(ui_home, NULL, NULL, ui_event_message, (void *)1, &app_message_img, 86, 410);
-    backgBut_explain(ui_home, NULL, NULL, ui_event_camera, (void *)1, &app_camera_img, 156, 410);
+    backgBut_explain(ui_home, NULL, NULL, NULL, (void *)1, &app_Phone_img, 18, 410);
+    backgBut_explain(ui_home, NULL, NULL, NULL, (void *)1, &app_message_img, 86, 410);
+    backgBut_explain(ui_home, NULL, NULL, NULL, (void *)1, &app_camera_img, 156, 410);
 
     //backgBut_explain(ui_home, NULL, (char*)"", NULL, (void *)1, NULL, 200, 7);
     //backgBut_explain(ui_home, NULL, (char*)"12:12", NULL, (void *)1, NULL, 100, 7);
@@ -3096,7 +2453,6 @@ void ui_init(void)
     lv_obj_set_style_outline_pad(ui_Image9, 0, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor(ui_Image9, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor_opa(ui_Image9, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_add_event_cb(ui_Image9, flashlight_btn_cb, LV_EVENT_CLICKED, (void *)9);
 
     lv_obj_t *ui_Image10 = lv_img_create(ui_controlCenter);
     lv_img_set_src(ui_Image10, &app_auto_brightne_img);
@@ -3162,7 +2518,6 @@ void ui_init(void)
     lv_obj_set_style_outline_opa(ui_Image8, 255, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_outline_width(ui_Image8, 5, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_outline_pad(ui_Image8, 0, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_add_event_cb(ui_Image8, flashlight_btn_cb, LV_EVENT_CLICKED, (void *)8);
 
     lv_obj_t *ui_Label5 = lv_label_create(ui_Panel3);
     lv_obj_set_width(ui_Label5, LV_SIZE_CONTENT);
@@ -3198,7 +2553,6 @@ void ui_init(void)
     lv_obj_set_style_outline_pad(ui_Image16, 0, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor(ui_Image16, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor_opa(ui_Image16, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_add_event_cb(ui_Image16, flashlight_btn_cb, LV_EVENT_CLICKED, (void *)16);
 
     lv_obj_t *ui_Image17 = lv_img_create(ui_controlCenter);
     lv_img_set_src(ui_Image17, &ui_img_204030930);
@@ -3226,7 +2580,6 @@ void ui_init(void)
     lv_obj_set_style_outline_pad(ui_Image17, 0, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor(ui_Image17, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor_opa(ui_Image17, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_add_event_cb(ui_Image17, flashlight_btn_cb, LV_EVENT_CLICKED, (void *)17);
 
     lv_obj_t *ui_Image18 = lv_img_create(ui_controlCenter);
     lv_img_set_src(ui_Image18, &ui_img_350297007);
@@ -3254,7 +2607,6 @@ void ui_init(void)
     lv_obj_set_style_outline_pad(ui_Image18, 0, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor(ui_Image18, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor_opa(ui_Image18, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_add_event_cb(ui_Image18, flashlight_btn_cb, LV_EVENT_CLICKED, (void *)18);
 
     lv_obj_t *ui_Image19 = lv_img_create(ui_controlCenter);
     lv_img_set_src(ui_Image19, &ui_img_1918312013);
@@ -3282,16 +2634,6 @@ void ui_init(void)
     lv_obj_set_style_outline_pad(ui_Image19, 0, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor(ui_Image19, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_set_style_img_recolor_opa(ui_Image19, 255, LV_PART_MAIN | LV_STATE_CHECKED);
-    lv_obj_add_event_cb(ui_Image19, camera_open_btn_cb, LV_EVENT_CLICKED, (void *)19);
-
-    /*Create a slider in the center of the display*/
-    lv_obj_t * slider = lv_slider_create(ui_controlCenter);
-    lv_obj_set_size(slider, 180, 15);
-    lv_obj_align_to(slider, ui_controlCenter, LV_ALIGN_BOTTOM_MID, 0, -100);
-    lv_obj_t * slider_label = lv_label_create(ui_controlCenter);
-    lv_label_set_text(slider_label, "vibtsting motor 0%");
-    lv_obj_align_to(slider_label, slider, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    lv_obj_add_event_cb(slider, slider_event_cb, LV_EVENT_VALUE_CHANGED, slider_label);
 
     lv_obj_add_event_cb(ui_controlListener, ui_event_controlListener, LV_EVENT_ALL, NULL);
     lv_obj_add_event_cb(ui_controlCenter, ui_event_controlCenter, LV_EVENT_ALL, NULL);
@@ -3301,9 +2643,6 @@ void ui_init(void)
     ui_wifiset_screen_init();
     ui_aboutui_screen_init();
     ui_datetimeui_screen_init();
-    ui_camera_screen_init();
-    ui_photos_screen_init();
-    ui_counter_screen_init();
 
     _ui_screen_change(ui_home, LV_SCR_LOAD_ANIM_FADE_ON, 200, 0);
 
