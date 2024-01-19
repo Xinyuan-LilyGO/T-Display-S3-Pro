@@ -9,7 +9,20 @@
 #include <esp_camera.h>
 #include "ESP32_OV5640_AF.h"
 #include "sd_card.h"
+#include "EEPROM.h"
+/*********************************************************************************
+ *                               EEPROM
+ *********************************************************************************/
+#define EEPROM_SIZE_MAX 5
+#define EEPROM_MAGIC_NUM 0xAA
+#define EEPROM_FRIST_ADDR  0
+#define EEPROM_CAMERA_ADDR 1
+uint8_t eeprom_buf[EEPROM_SIZE_MAX];
 
+extern bool camera_rotation_flag;
+/*********************************************************************************
+ *                              TYPEDEFS
+ *********************************************************************************/
 static SensorLTR553 als;
 static PowersSY6970 PMU;
 static WiFiEvent_t event;
@@ -17,6 +30,46 @@ static QueueHandle_t wifi_setting_queue;
 static EventGroupHandle_t touch_eg;
 static bool hasSensor = false, hasPMU = false;
 static int autonBrightness = 0;
+
+void eeprom_write(int addr, uint8_t val)
+{
+    eeprom_buf[EEPROM_FRIST_ADDR] = EEPROM_MAGIC_NUM;
+    eeprom_buf[addr] = val;
+
+    for(int i = 0; i < EEPROM_SIZE_MAX; i++){
+        EEPROM.write(i, eeprom_buf[i]);
+    }
+    EEPROM.commit();
+    for (int i = 0; i < EEPROM_SIZE_MAX; i++) {
+        Serial.print(byte(EEPROM.read(i))); Serial.print(" ");
+    }
+    Serial.println("");
+}
+
+void eeproom_init(void)
+{
+    if (!EEPROM.begin(EEPROM_SIZE_MAX)) {
+        Serial.println("failed to initialise EEPROM"); delay(1000000);
+    }
+    Serial.println(" bytes read from Flash . Values are:");
+
+    for (int i = 0; i < EEPROM_SIZE_MAX; i++) {
+        eeprom_buf[i] = EEPROM.read(i);
+        Serial.print(byte(EEPROM.read(i))); Serial.print(" ");
+    }
+
+    uint8_t frist_read = eeprom_buf[EEPROM_FRIST_ADDR];
+    Serial.printf(" read = %d\n", frist_read);
+    if(frist_read == EEPROM_MAGIC_NUM){
+        camera_rotation_flag = eeprom_buf[EEPROM_CAMERA_ADDR];
+    }else{
+        lv_memset_00(eeprom_buf, EEPROM_SIZE_MAX);
+        for(int i=0; i < EEPROM_SIZE_MAX; i++){
+            EEPROM.write(i, eeprom_buf[i]);
+        }
+        EEPROM.commit();
+    }
+}
 
 void lv_auto_brightne_cd(void)
 {
@@ -307,6 +360,8 @@ void setup()
     wifi_setting_queue = xQueueCreate(5, sizeof(uint16_t));
 
     Serial.begin(115200);
+
+    eeproom_init();
 
     // vibrating motor init
     pinMode(VIBRATING_MOTOR, OUTPUT);

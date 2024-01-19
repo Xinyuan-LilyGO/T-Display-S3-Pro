@@ -171,6 +171,7 @@ lv_img_dsc_t img_canvas_src;
 lv_timer_t *camera_timer = NULL;
 bool camera_get_photo_flag = false;
 bool camera_led_open_flag = false;
+bool camera_rotation_flag = false;
 
 lv_obj_t *ui_photos = NULL;
 lv_obj_t *ui_photos_list = NULL;
@@ -825,14 +826,13 @@ static void camera_video_play(lv_timer_t *t)
         ESP_LOGI("", "id=%d, w=%d, h=%d, len=%d", s->id.PID, frame->width, frame->height, frame->len);
 #if UI_CAMERA_CANVAS 
 
-        if(s->id.PID == GC0308_PID){
+        if(camera_rotation_flag == true){
             for(int i = 0; i < frame->len / 2; i++){
                 px_swap(&frame->buf[i], &frame->buf[frame->len-i]);
             }
         }
         
         lv_canvas_set_buffer(ui_camera_canvas, frame->buf, frame->height, frame->width, LV_IMG_CF_TRUE_COLOR);
-
 #else
         img_canvas_src.header.cf = LV_IMG_CF_RAW;
         img_canvas_src.header.always_zero = 0;
@@ -900,11 +900,8 @@ void open_camera_cb(lv_event_t *e)
     }
 
     if(data == SAVE_TO_SD_CARD){
-        if(sd_card_get_init_flag() == false){
-            Serial.println("No find SD card!");
-            prompt_info("No find SD card!", UI_PROMPT_TIME);
-            return;
-        }
+        camera_rotation_flag = !camera_rotation_flag;
+        eeprom_write(1, byte(camera_rotation_flag));
     }
 }
 
@@ -2559,7 +2556,7 @@ void ui_camera_screen_init(void)
     lv_obj_align_to(btn3, btn2, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     lv_obj_add_event_cb(btn3, open_camera_cb, LV_EVENT_CLICKED, (void *)4);
     label = lv_label_create(btn3);
-    lv_label_set_text(label, "SAVE");
+    lv_label_set_text(label, "Rotate");
     lv_obj_center(label);
 #if UI_CAMERA_CANVAS  
     ui_camera_canvas = lv_canvas_create(ui_camera);
