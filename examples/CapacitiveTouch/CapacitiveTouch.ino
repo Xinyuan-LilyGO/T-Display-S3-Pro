@@ -62,7 +62,7 @@ void setup()
 
     // Initialize capacitive touch
     touch.setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
-    touch.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL, CST226SE_SLAVE_ADDRESS);
+    touch.begin(Wire, CST226SE_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
 
     //Set the screen to turn on or off after pressing the screen Home touch button
     touch.setHomeButtonCallback(touchHomeKeyCallback);

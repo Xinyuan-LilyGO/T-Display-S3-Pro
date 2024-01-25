@@ -876,7 +876,7 @@ bool initPMU()
 bool initCapacitiveTouch()
 {
     touch.setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
-    hasTouch = touch.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL, CST226SE_SLAVE_ADDRESS);
+    hasTouch = touch.begin(Wire, CST226SE_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
     if (!hasTouch) {
         Serial.println("Failed to find Capacitive Touch !"); return false;
     } else {
