@@ -137,31 +137,43 @@ bool sd_card_bmp_img(const char * path, uint32_t w, uint32_t h, uint8_t *buf)
 
 bool sd_card_bmp_lvgl(const char * path, uint32_t w, uint32_t h, lv_obj_t *canvas)
 {
-     uint32_t img_size = w * h * 2;
+    uint32_t img_size = w * h * 2;
 
     bmp_file_head_t head;
     memset(&head, 0, sizeof(head));
     head.type = 0x4d42;
-    head.size = 54 + img_size;
+    head.size = 54 + img_size + 16;
     head.reserved1 = 0;
     head.reserved2 = 0;
-    head.offs_bits = 54;
+    head.offs_bits = 54 + 16;
 
     bmp_file_info_t info;
     memset(&info, 0, sizeof(info));
-    info.size = 40;
+    info.size = 40 + 16;
     info.w = w;
     info.h = h;
     info.planes = 1;
     info.pixel_bit = 16;
-    info.compression = 0;
+    info.compression = 3;
     info.img_size = img_size;
+    info.hor_resolution = 2835;
+    info.ver_resolution = 2835;
     info.pallet_cnt = 0;
     info.color_important = 0;
+
+    uint32_t r = 0x0000F800;
+    uint32_t g = 0x000007E0;
+    uint32_t b = 0x0000001F;
+    uint32_t reserved = 0;
 
     File f = SD_FD_DRI.open(path, FILE_APPEND);
     f.write((uint8_t*)&head, (unsigned int)sizeof(head));
     f.write((uint8_t*)&info, (unsigned int)sizeof(info));
+    f.write((uint8_t*)&r, sizeof(r));
+    f.write((uint8_t*)&g, sizeof(g));
+    f.write((uint8_t*)&b, sizeof(b));
+    f.write((uint8_t*)&reserved, sizeof(reserved));
+
     color_rgb565_t color;
     for(int i = 0; i < h; i++)
         for(int j = 0; j < w; j++){
