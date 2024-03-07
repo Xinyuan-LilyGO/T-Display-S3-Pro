@@ -36,9 +36,16 @@ void setup()
     // Set the charging current , Range:0~5056mA ,step:64mA
     PMU.setChargerConstantCurr(320);
 
+    // When the battery is not connected and the USB is plugged in, the board's LED status indicator light will flash.
+    // You can use `PMU.disableStatLed();` to turn off the indicator light,
+    // but this means that if the battery is connected for charging, the LED light will also be disabled.
+    // PMU.disableStatLed();
+
+    // Enable charging led
+    PMU.enableStatLed();
+
     // To obtain voltage data, the ADC must be enabled first
     PMU.enableADCMeasure();
-
 
 }
 
