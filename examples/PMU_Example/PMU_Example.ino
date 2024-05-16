@@ -26,6 +26,9 @@ void setup()
             delay(50);
         }
     }
+    // Set USB input current limit
+    PMU.setInputCurrentLimit(1000);
+
     // The onboard battery is fully charged at 4.35V
     // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
     PMU.setChargeTargetVoltage(4352);
@@ -46,6 +49,13 @@ void setup()
 
     // To obtain voltage data, the ADC must be enabled first
     PMU.enableADCMeasure();
+
+
+    // For devices that have been connected to the battery, the charging function is turned on by default.
+    // PMU.enableCharge();
+
+    // For boards without an external battery, the charging function should be turned off, otherwise the power supply current of the power chip will be limited.
+    PMU.disableCharge();
 
 }
 
