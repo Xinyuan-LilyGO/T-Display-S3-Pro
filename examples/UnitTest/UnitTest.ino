@@ -842,6 +842,9 @@ bool initPMU()
         Serial.println("Failed to find Power management !"); return false;
     } else {
 
+        // Set USB input current limit
+        PMU.setInputCurrentLimit(1000);
+
         // The onboard battery is fully charged at 4.35V
         // Set the charging target voltage, Range:3840 ~ 4608mV ,step:16 mV
         PMU.setChargeTargetVoltage(4352);
@@ -861,8 +864,11 @@ bool initPMU()
         // Turn off the PMU charging indicator light
         PMU.disableStatLed();
 
-        // Turn on PMU charging function
-        PMU.enableCharge();
+        // For devices that have been connected to the battery, the charging function is turned on by default.
+        // PMU.enableCharge();
+
+        // For boards without an external battery, the charging function should be turned off, otherwise the power supply current of the power chip will be limited.
+        PMU.disableCharge();
 
         // Turn off OTG power supply output
         PMU.disableOTG();
