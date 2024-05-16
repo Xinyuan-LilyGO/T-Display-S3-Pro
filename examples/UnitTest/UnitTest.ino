@@ -113,7 +113,8 @@ static lv_obj_t  *massStorageList;
 static camera_config_t cameraConfig;
 static bool ir_state = 1, led_state = 1;
 static lv_obj_t *imageView = NULL;
-
+static lv_obj_t *labelPoint = NULL;
+static const char *format_string = "#FFFFFF X:%d# #FFFFFF Y:%d#\n ";
 
 void initButton();
 void lv_helper();
@@ -135,6 +136,38 @@ void handleEvent(AceButton *button, uint8_t eventType, uint8_t buttonState);
 void buttonHandler(void *);
 void massStorageEventHandler(lv_event_t *e);
 void saveJPEG(camera_fb_t *fb);
+
+
+
+void boundariesUI(lv_obj_t *parent)
+{
+    labelPoint = lv_label_create(parent);
+    lv_label_set_long_mode(labelPoint, LV_LABEL_LONG_WRAP);     /*Break the long lines*/
+    lv_label_set_recolor(labelPoint, true);                      /*Enable re-coloring by commands in the text*/
+    lv_obj_set_width(labelPoint, 150);  /*Set smaller width to make the lines wrap*/
+    lv_obj_set_style_text_font(labelPoint, &lv_font_montserrat_28, LV_PART_MAIN);
+    lv_obj_set_style_text_align(labelPoint, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(labelPoint, LV_ALIGN_CENTER, 0, 0);
+
+    lv_align_t  align[] = {LV_ALIGN_TOP_LEFT,
+                           LV_ALIGN_TOP_MID,
+                           LV_ALIGN_TOP_RIGHT,
+                           LV_ALIGN_BOTTOM_LEFT,
+                           LV_ALIGN_BOTTOM_MID,
+                           LV_ALIGN_BOTTOM_RIGHT,
+                           LV_ALIGN_LEFT_MID,
+                           LV_ALIGN_RIGHT_MID
+                          };
+    for (int i = 0; i < sizeof(align) / sizeof(*align); ++i) {
+        lv_obj_t *btn = lv_btn_create(parent);
+        lv_obj_set_size(btn, 60, 60);
+        lv_obj_t *label = lv_label_create(btn);
+        lv_label_set_text_fmt(label, "%d", i);
+        lv_obj_add_flag(btn, LV_OBJ_FLAG_CHECKABLE);
+        lv_obj_center(btn);
+        lv_obj_align(btn, align[i], 0, 0);
+    }
+}
 
 void serialToScreen(lv_obj_t *parent, String string,  bool result)
 {
@@ -160,6 +193,8 @@ void serialToScreen(lv_obj_t *parent, String string,  bool result)
         delay(1);
     }
 }
+
+
 
 
 void setup()
@@ -293,6 +328,15 @@ void loop()
             listDir(SD, "/", 0);
         }
         break;
+    case 4: {
+        lv_indev_t *indev = lv_indev_get_next(NULL);
+        lv_point_t  point;
+        if ( indev->proc.state == LV_INDEV_STATE_PRESSED ) {
+            lv_indev_get_point(indev, &point);
+            lv_label_set_text_fmt(labelPoint, format_string, point.x, point.y);
+        }
+    }
+    break;
     default:
         break;
     }
@@ -398,6 +442,8 @@ void initGUI()
     lv_obj_t *tv2 = lv_tileview_add_tile(tileview, 0, 1, LV_DIR_VER);
     lv_obj_t *tv3 = lv_tileview_add_tile(tileview, 0, 2, LV_DIR_VER);
     lv_obj_t *tv4 = lv_tileview_add_tile(tileview, 0, 3, LV_DIR_VER);
+    lv_obj_t *tv5 = lv_tileview_add_tile(tileview, 0, 4, LV_DIR_VER);
+
 
     clockUI(tv1);
 
@@ -406,6 +452,8 @@ void initGUI()
     massStorageUI(tv3);
 
     devicesUI(tv4);
+
+    boundariesUI(tv5);
 
     // MPU9250/MPU6050 non onboard sensors, default access from QWIIC interface
     if (hasMPU6050 || hasMPU9250) {
