@@ -14,19 +14,22 @@
   * If USBC is marked with V1.1, it is the current version. If not, it is V1.0.
 - T-Display-S3-Pro uses the SY6970 power path switching chip. In order to maintain stable power supply when the battery is not connected, the charging function must be turned off. Devices connected to the battery do not need to be turned off. How to turn off charge please refer [here](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/c267d7463609e1f6c62e74455ac5048c9ae93bc3/examples/PMU_Example/PMU_Example.ino#L58)
 
+- New T-Display-S3-Pro-MVSRBoard backplane was launched on September 13, 2024, with external speakers, microphones, RTC clocks, and vibration functions.
+
 
 ## 1️⃣Product
 
 | Product(PinMap)       | SOC        | Flash | PSRAM    | Resolution |
 | --------------------- | ---------- | ----- | -------- | ---------- |
 | [T-Display-S3-Pro][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
+| [T-Display-S3-Pro-MVSRBoard]() |  |   |  |     |
 
 [1]: https://www.lilygo.cc/products/t-display-s3-pro
 
 ## 2️⃣Examples
 
 ```txt
-examples
+T-Display-S3-Pro examples
 ├── examples/Arduino_GFX_HelloWorld           # Arduino_GFX example
 ├── examples/Arduino_GFX_LvglBenchmark        # Arduino_GFX example
 ├── examples/Arduino_GFX_PDQgraphicstest      # Arduino_GFX example
@@ -43,6 +46,22 @@ examples
 
 If use the 'examples/Cellphone' examples,
 be careful not block the top of the "S3-Pro" screen, if it is blocked, the screen will sleep.
+
+T-Display-S3-Pro-MVSRBoard examples
+├── examples/DMIC_ReadData           
+├── examples/DMIC_SD                     
+├── examples/IIC_Scan_2               
+├── examples/PCF85063                  
+├── examples/PCF85063_Scheduled_INT           
+├── examples/PCF85063_Timer_INT             
+├── examples/USB_Host_Camera_Screen             
+├── examples/Vibration_Motor             
+├── examples/Wifi_Music             
+└── examples/Original_Test                          # Factory example
+
+T-Display-S3-Pro-MVSRBoard firmware
+└── firmware/T-Display-S3-Pro-MVSRBoard/[T-Display-S3-Pro-MVSRBoard_V1.0][Original_Test]_firmware_V1.0.1.bin                          # Factory example
+
 ```
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)
@@ -115,5 +134,9 @@ Please enter the upload mode manually.
 * [MPU9250](https://github.com/hideakitai/MPU9250)
 * [MPU6050](https://github.com/electroniccats/mpu6050)
 
+* [Arduino_DriveBus-1.1.13](https://github.com/Xk-w/Arduino_DriveBus)
+* [ESP32_USB_Stream-0.0.1](https://github.com/esp-arduino-libs/ESP32_USB_Stream)
+* [ESP32-audioI2S-3.0.8](https://github.com/schreibfaul1/ESP32-audioI2S)
+* [JPEGDEC-1.2.8](https://github.com/bitbank2/JPEGDEC)
 
 
