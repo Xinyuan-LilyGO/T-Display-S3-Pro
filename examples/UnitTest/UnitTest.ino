@@ -1519,6 +1519,12 @@ void handleEvent(AceButton *button, uint8_t eventType, uint8_t buttonState)
             esp_camera_deinit();
         }
 
+        if (hasBHI260) {
+            // Remove sensor event ,sensor auto poweroff
+            bhy.removeResultEvent(SENSOR_ID_ACC_PASS, accel_process_callback);
+            bhy.removeResultEvent(SENSOR_ID_GYRO_PASS, gyro_process_callback);
+        }
+
         // Enter display in sleep mode
         tft.writecommand(0x10);
 
