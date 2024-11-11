@@ -31,7 +31,7 @@
 #define BOARD_SD_CS         14
 #define BOARD_SENSOR_IRQ    21
 #define BOARD_TOUCH_RST     13
-#define BOARD_TOUCH_IRQ     7
+
 #define BOARD_TFT_WIDTH     222
 #define BOARD_TFT_HEIHT     480
 
