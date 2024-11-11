@@ -140,7 +140,7 @@ void setup()
     *   PS_LED_CUR_50MA,
     *   PS_LED_CUR_100MA,
     * * * * * * * */
-    als.setPsLedCurrnet(SensorLTR553::PS_LED_CUR_100MA);
+    als.setPsLedCurrent(SensorLTR553::PS_LED_CUR_100MA);
 
     /*
     *   PS_MEAS_RATE_50MS,

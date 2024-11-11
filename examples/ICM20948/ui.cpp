@@ -13,7 +13,7 @@
 #define BOARD_TFT_BL        48
 
 #define BOARD_TOUCH_RST     13
-#define BOARD_TOUCH_IRQ     7
+#define BOARD_SENSOR_IRQ    21
 
 #define TFT_WIDTH  222
 #define TFT_HEIGHT 480
@@ -76,7 +76,7 @@ void ui_init(uint8_t r)
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(r);
 
-    touch.setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
+    touch.setPins(BOARD_TOUCH_RST, BOARD_SENSOR_IRQ);
     bool hasTouch = touch.begin(Wire, CST226SE_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
     if (!hasTouch) {
         Serial.println("Failed to find Capacitive Touch !");

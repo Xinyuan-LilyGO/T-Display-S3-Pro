@@ -121,7 +121,7 @@ void lv_helper(uint8_t r)
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(r);
 
-    touch.setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
+    touch.setPins(BOARD_TOUCH_RST, BOARD_SENSOR_IRQ);
     bool hasTouch = touch.begin(Wire, CST226SE_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
     if (!hasTouch) {
         Serial.println("Failed to find Capacitive Touch !");

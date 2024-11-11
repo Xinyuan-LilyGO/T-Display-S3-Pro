@@ -40,8 +40,8 @@ static void lv_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data
     uint8_t touched = touch.getPoint(x, y, touch.getSupportTouchPoint());
     if (touched) {
         data->state = LV_INDEV_STATE_PR;
-        data->point.x = y[0];
-        data->point.y = tft.height() - x[0];
+        data->point.x = x[0];
+        data->point.y = y[0];
     } else {
         data->state = LV_INDEV_STATE_REL;
     }
@@ -113,12 +113,15 @@ void lv_helper(QueueHandle_t queue_i, int *x_max_o, int *y_max_o)
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(1);
 
-    touch.setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
+    touch.setPins(BOARD_TOUCH_RST, BOARD_SENSOR_IRQ);
     bool hasTouch = touch.begin(Wire, CST226SE_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
     if (!hasTouch) {
         Serial.println("Failed to find Capacitive Touch !");
     } else {
         Serial.println("Find Capacitive Touch");
+        touch.setMaxCoordinates(TFT_HEIGHT, TFT_WIDTH);
+        touch.setSwapXY(true);
+        touch.setMirrorXY(false, true);
         touch.setHomeButtonCallback([](void *user_data) {
             Serial.println("Home key pressed!");
             static uint32_t checkMs = 0;

@@ -45,16 +45,18 @@
 //QWIIC MPU6050 DEPENDENT
 #include <I2Cdev.h>
 #include <MPU6050.h>
-
+// Optional 6-axis sensor module
+#include <SensorBHI260AP.hpp>
+#include <MadgwickAHRS.h>       //MadgwickAHRS from https://github.com/arduino-libraries/MadgwickAHRS
 
 using namespace ace_button;
 
 #ifndef WIFI_SSID
-#define WIFI_SSID           "Your WiFi SSDI"
+#define WIFI_SSID           "Your WiFi SSID"
 #endif
 
 #ifndef WIFI_PASSWORD
-#define WIFI_PASSWORD       "Your WiFi PASSOWRD"
+#define WIFI_PASSWORD       "Your WiFi PASSWORD"
 #endif
 
 #define NTP_SERVER1           "pool.ntp.org"
@@ -88,8 +90,17 @@ uint8_t buttonsArray[BOARD_USER_BTN_NUM] = BOARD_USER_BUTTON;
 MPU9250 mpu;
 MPU6050 accelgyro;
 
+#include <cbuf.h>
+//BHI260AP Optional 6-axis sensor module
+SensorBHI260AP bhy;
+void gyro_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len, uint64_t *timestamp);
+void accel_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len, uint64_t *timestamp);
+cbuf accel_data_buffer(10);
+cbuf gyro_data_buffer(10);
+Madgwick filter;
+
 static int16_t x[5], y[5];
-static bool hasPMU, hasALS, hasTouch, hasCamera, hasMPU9250, hasMPU6050, hasSD;
+static bool hasPMU, hasALS, hasTouch, hasCamera, hasMPU9250, hasMPU6050, hasSD, hasBHI260;
 static bool isBacklightOn = true;
 static bool manualOff = false;
 static SemaphoreHandle_t spiLock;
@@ -101,7 +112,7 @@ static camera_sensor_info_t *sinfo = NULL;
 #define CANVAS_FORMART      LV_IMG_CF_TRUE_COLOR  // = RGB565
 
 static lv_obj_t *canvas;
-static lv_color_t *cbuf;
+static lv_color_t *colorBuffer;
 static lv_obj_t *hour_text;
 static lv_obj_t *min_text;
 static lv_obj_t *als_label ;
@@ -249,6 +260,35 @@ void setup()
     if (!hasMPU9250) {
         accelgyro.initialize();
         hasMPU6050 = accelgyro.testConnection() ;
+        if (!hasMPU6050) {
+            // Set the reset pin and interrupt pin, if any
+            bhy.setPins(-1, BOARD_SENSOR_IRQ);
+            Serial.println("Initializing Sensors...");
+            // Using I2C interface
+            hasBHI260 = bhy.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL, BHI260AP_SLAVE_ADDRESS_L);
+            if (hasBHI260) {
+                float sample_rate = 100.0;      /* Read out hintr_ctrl measured at 100Hz */
+                uint32_t report_latency_ms = 0; /* Report immediately */
+
+                // Enable acceleration
+                bhy.configure(SENSOR_ID_ACC_PASS, sample_rate, report_latency_ms);
+                // Enable gyroscope
+                bhy.configure(SENSOR_ID_GYRO_PASS, sample_rate, report_latency_ms);
+
+                // Set the acceleration sensor result callback function
+                bhy.onResultEvent(SENSOR_ID_ACC_PASS, accel_process_callback);
+
+                // Set the gyroscope sensor result callback function
+                bhy.onResultEvent(SENSOR_ID_GYRO_PASS, gyro_process_callback);
+
+                // Initialize Sensor
+                accel_data_buffer.resize(sizeof(struct bhy2_data_xyz) * 2);
+                gyro_data_buffer.resize(sizeof(struct bhy2_data_xyz) * 2);
+
+            } else {
+                Serial.print("Failed to initialize BHI260 sensor");
+            }
+        }
     }
 
     if (hasMPU6050) {
@@ -256,6 +296,8 @@ void setup()
         accelgyro.setTempSensorEnabled(true);
     } else if (hasMPU9250) {
         serialToScreen(cont, "IMU MPU9250 (Non onboard,QWIIC or Shield)", hasMPU9250);
+    } else if (hasBHI260) {
+        serialToScreen(cont, "IMU BHI260AP (Onboard T-BHI260)", hasBHI260);
     } else {
         serialToScreen(cont, "IMU (Non onboard,QWIIC or Shield)", false);
     }
@@ -303,8 +345,8 @@ void loop()
                     esp_camera_fb_return(frame);
                     break;
                 }
-                memcpy(&cbuf->full, frame->buf, frame_len);
-                lv_canvas_set_buffer(canvas, cbuf, CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR );
+                memcpy(&colorBuffer->full, frame->buf, frame_len);
+                lv_canvas_set_buffer(canvas, colorBuffer, CANVAS_WIDTH, CANVAS_HEIGHT, LV_IMG_CF_TRUE_COLOR );
                 if (capture) {
                     saveJPEG(frame);
                 }
@@ -339,6 +381,9 @@ void loop()
     break;
     default:
         break;
+    }
+    if (hasBHI260) {
+        bhy.update();
     }
     lv_task_handler();
     delay(1);
@@ -474,7 +519,6 @@ void initGUI()
 
         lv_timer_create([](lv_timer_t *t) {
             lv_obj_t *label = (lv_obj_t *)t->user_data;
-
             if (hasMPU9250) {
                 if (mpu.update()) {
                     Serial.print("Yaw, Pitch, Roll: ");
@@ -502,8 +546,60 @@ void initGUI()
                                       ax, ay, az, gx, gy, gz, temperature);
             }
             lv_obj_center(label);
-
         }, 100, label1);
+
+    } else if (hasBHI260) {
+
+        lv_obj_t *tv5 = lv_tileview_add_tile(tileview, 0, 4, LV_DIR_VER);
+
+        lv_obj_t *cont = lv_obj_create(tv5);
+
+        lv_obj_set_style_radius(cont, 0, 0);
+        lv_obj_set_size(cont, LV_PCT(100), LV_PCT(100));
+        lv_obj_center(cont);
+
+        lv_obj_t *attitude = lv_label_create(cont);
+        lv_label_set_long_mode(attitude, LV_LABEL_LONG_WRAP); /*Break the long lines*/
+        lv_label_set_recolor(attitude, true);                 /*Enable re-coloring by commands in the text*/
+        lv_obj_set_style_text_color(attitude, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_font(attitude, &lv_font_montserrat_14, LV_PART_MAIN);
+        lv_label_set_text_fmt(attitude, "Roll:% 3.2f\nPitch:% 3.2f\nHeading:% 3.2f\n", 0, 0, 0);
+        lv_obj_align(attitude, LV_ALIGN_CENTER, 0, 0);
+
+
+        lv_timer_create([](lv_timer_t *t) {
+
+            lv_obj_t *label =   (lv_obj_t *)t->user_data;
+
+            float roll, pitch, heading;
+
+            // Read data from buffer
+            struct bhy2_data_xyz gyr;
+            gyro_data_buffer.read(( char *)&gyr, sizeof(gyr));
+
+            struct bhy2_data_xyz acc;
+            accel_data_buffer.read(( char *)&acc, sizeof(acc));
+
+            float accel_scaling_factor = get_sensor_default_scaling(BHY2_SENSOR_ID_ACC_PASS);
+            float gyro_scaling_factor = get_sensor_default_scaling(BHY2_SENSOR_ID_GYRO_PASS);
+
+            // update the filter, which computes orientation
+            filter.updateIMU(gyr.x * gyro_scaling_factor,
+                             gyr.y * gyro_scaling_factor,
+                             gyr.z * gyro_scaling_factor,
+                             acc.x * accel_scaling_factor,
+                             acc.y * accel_scaling_factor,
+                             acc.z * accel_scaling_factor
+                            );
+
+            // get the heading, pitch and roll
+            roll = filter.getRoll();
+            pitch = filter.getPitch();
+            heading = filter.getYaw();
+
+            lv_label_set_text_fmt(label, "Roll:\n\t% 3.2f\nPitch:\n\t% 3.2f\nHeading:\n\t% 3.2f\n", roll, pitch, heading);
+
+        }, 15, attitude);
     }
 }
 
@@ -678,7 +774,7 @@ void clockUI(lv_obj_t *parent)
     als_label = lv_label_create(main_cout);
     lv_obj_center(als_label);
     lv_obj_set_style_text_font(als_label, &lv_font_montserrat_18, 0);
-    lv_label_set_text(als_label, "dectete...");
+    lv_label_set_text(als_label, "detected...");
     lv_obj_set_style_text_color(als_label, UI_FONT_COLOR, 0);
     lv_obj_align(als_label, LV_ALIGN_BOTTOM_MID, 0, 8);
 
@@ -791,7 +887,7 @@ void massStorageUI(lv_obj_t *parent)
         lv_obj_t *label1 = lv_label_create(cont);
         lv_label_set_recolor(label1, true);
         lv_obj_set_style_text_font(label1, &lv_font_montserrat_44, 0);
-        lv_label_set_text(label1, "#ff0000 No SDCard dected! #");
+        lv_label_set_text(label1, "#ff0000 No SDCard detected! #");
 
         lv_obj_center(label1);
         return ;
@@ -840,18 +936,18 @@ void cameraUi(lv_obj_t *parent)
         lv_obj_t *label =  lv_label_create(parent);
         lv_obj_set_style_text_font(label, &lv_font_montserrat_44, 0);
         lv_obj_set_style_text_color(label, lv_color_make(255, 0, 0), 0);
-        lv_label_set_text(label, "No Camera dected!");
+        lv_label_set_text(label, "No Camera detected!");
         lv_obj_center(label);
         return;
     }
 
     static uint8_t index[3] = {0, 1, 2};
-    cbuf =  (lv_color_t *)lv_mem_alloc(CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(lv_color_t));
-    lv_memset(cbuf, 0, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(lv_color_t));
-    assert(cbuf);
+    colorBuffer =  (lv_color_t *)lv_mem_alloc(CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(lv_color_t));
+    lv_memset(colorBuffer, 0, CANVAS_WIDTH * CANVAS_HEIGHT * sizeof(lv_color_t));
+    assert(colorBuffer);
 
     canvas = lv_canvas_create(parent);
-    lv_canvas_set_buffer(canvas, cbuf, CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_FORMART );
+    lv_canvas_set_buffer(canvas, colorBuffer, CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_FORMART );
     lv_obj_center(canvas);
 
     lv_obj_t *btn = lv_btn_create(canvas);
@@ -929,11 +1025,16 @@ bool initPMU()
 //! Capacitive Touch
 bool initCapacitiveTouch()
 {
-    touch.setPins(BOARD_TOUCH_RST, BOARD_TOUCH_IRQ);
+    touch.setPins(BOARD_TOUCH_RST, BOARD_SENSOR_IRQ);
     hasTouch = touch.begin(Wire, CST226SE_SLAVE_ADDRESS, BOARD_I2C_SDA, BOARD_I2C_SCL);
     if (!hasTouch) {
         Serial.println("Failed to find Capacitive Touch !"); return false;
     } else {
+
+        touch.setMaxCoordinates(TFT_HEIGHT, TFT_WIDTH);
+        touch.setSwapXY(true);
+        touch.setMirrorXY(false, true);
+
         Serial.println("Find Capacitive Touch");
         touch.setHomeButtonCallback([](void *user_data) {
             Serial.println("Home key pressed!");
@@ -1041,7 +1142,7 @@ bool initSensor()
         *   PS_LED_CUR_50MA,
         *   PS_LED_CUR_100MA,
         * * * * * * * */
-        als.setPsLedCurrnet(SensorLTR553::PS_LED_CUR_100MA);
+        als.setPsLedCurrent(SensorLTR553::PS_LED_CUR_100MA);
 
         /*
         *   PS_MEAS_RATE_50MS,
@@ -1095,8 +1196,8 @@ void lv_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
     uint8_t touched = touch.getPoint(x, y, touch.getSupportTouchPoint());
     if (touched) {
         data->state = LV_INDEV_STATE_PR;
-        data->point.x = y[0];
-        data->point.y = tft.height() - x[0];
+        data->point.x = x[0];
+        data->point.y = y[0];
     } else {
         data->state = LV_INDEV_STATE_REL;
     }
@@ -1258,8 +1359,17 @@ void initWiFi()
     WiFi.mode(WIFI_STA);
     // Register WiFi event
     WiFi.onEvent(WiFiEvent);
-    Serial.println("Begin WiFi");
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    // Just for factory testing.
+    Serial.print("Use default WiFi SSID & PASSWORD!!");
+    Serial.print("SSID:"); Serial.println(WIFI_SSID);
+    Serial.print("PASSWORD:"); Serial.println(WIFI_PASSWORD);
+    if (String(WIFI_SSID) == "Your WiFi SSID" || String(WIFI_PASSWORD) == "Your WiFi PASSWORD" ) {
+        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+        Serial.println("[Error] : WiFi ssid and password are not configured correctly");
+    } else {
+        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    }
 }
 
 void datetimeSyncTask(void *ptr)
@@ -1465,4 +1575,39 @@ void initButton()
 
 
     xTaskCreate(buttonHandler, "btn", 2 * 1024, NULL, 10, NULL);
+}
+
+
+
+
+//BHI260AP Optional 6-axis sensor module
+void accel_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len, uint64_t *timestamp)
+{
+    struct bhy2_data_xyz data;
+    float scaling_factor = get_sensor_default_scaling(sensor_id);
+    bhy2_parse_xyz(data_ptr, &data);
+    accel_data_buffer.write((const char *)&data, sizeof(data));
+    // Serial.print(bhy.getSensorName(sensor_id));
+    // Serial.print(":");
+    // Serial.printf("x: %f, y: %f, z: %f;\r\n",
+    //               data.x * scaling_factor,
+    //               data.y * scaling_factor,
+    //               data.z * scaling_factor
+    //              );
+}
+
+//BHI260AP Optional 6-axis sensor module
+void gyro_process_callback(uint8_t sensor_id, uint8_t *data_ptr, uint32_t len, uint64_t *timestamp)
+{
+    struct bhy2_data_xyz data;
+    float scaling_factor = get_sensor_default_scaling(sensor_id);
+    bhy2_parse_xyz(data_ptr, &data);
+    gyro_data_buffer.write((const char *)&data, sizeof(data));
+    // Serial.print(bhy.getSensorName(sensor_id));
+    // Serial.print(":");
+    // Serial.printf("x: %f, y: %f, z: %f;\r\n",
+    //               data.x * scaling_factor,
+    //               data.y * scaling_factor,
+    //               data.z * scaling_factor
+    //              );
 }
