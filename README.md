@@ -47,22 +47,10 @@ T-Display-S3-Pro examples
 If use the 'examples/Cellphone' examples,
 be careful not block the top of the "S3-Pro" screen, if it is blocked, the screen will sleep.
 
-T-Display-S3-Pro-MVSRBoard examples
-├── examples/DMIC_ReadData           
-├── examples/DMIC_SD                     
-├── examples/IIC_Scan_2               
-├── examples/PCF85063                  
-├── examples/PCF85063_Scheduled_INT           
-├── examples/PCF85063_Timer_INT             
-├── examples/USB_Host_Camera_Screen             
-├── examples/Vibration_Motor             
-├── examples/Wifi_Music             
-└── examples/Original_Test                          # Factory example
-
-T-Display-S3-Pro-MVSRBoard firmware
-└── firmware/T-Display-S3-Pro-MVSRBoard/[T-Display-S3-Pro-MVSRBoard_V1.0][Original_Test]_firmware_V1.0.1.bin                          # Factory example
-
 ```
+
+The T-Display-S3-Pro backplane-related examples can be found by opening the following link. <br /> 
+> 1. [T-Display-S3-Pro-MVSRBoard examples](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro-MVSRBoard)
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)
 
