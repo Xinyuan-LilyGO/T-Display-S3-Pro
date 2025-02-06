@@ -51,6 +51,7 @@ be careful not block the top of the "S3-Pro" screen, if it is blocked, the scree
 
 The T-Display-S3-Pro backplane-related examples can be found by opening the following link. <br /> 
 > 1. [T-Display-S3-Pro-MVSRBoard examples](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro-MVSRBoard)
+> 2. [T-Display-S3-Pro-MVSRLora examples](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro-MVSRLora)
 
 ## 3️⃣ PlatformIO Quick Start (Recommended)
 
