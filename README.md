@@ -23,6 +23,7 @@
 | --------------------- | ---------- | ----- | -------- | ---------- |
 | [T-Display-S3-Pro][1] | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
 | [T-Display-S3-Pro-MVSRBoard]() |  |   |  |     |
+| [T-Display-S3-Pro-MVSRLora]() |  |   |  |     |
 
 [1]: https://www.lilygo.cc/products/t-display-s3-pro
 
