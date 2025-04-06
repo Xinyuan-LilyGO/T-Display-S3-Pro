@@ -129,8 +129,6 @@ void lv_helper(uint8_t r)
     } else {
         Serial.println("Find Capacitive Touch");
         touch.setMaxCoordinates(TFT_HEIGHT, TFT_WIDTH);
-        touch.setSwapXY(true);
-        touch.setMirrorXY(false, true);
         touch.setHomeButtonCallback(touchHomeKeyCallback, NULL);
     }
 
