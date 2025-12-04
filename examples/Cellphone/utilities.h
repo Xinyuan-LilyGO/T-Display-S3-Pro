@@ -8,7 +8,7 @@
  */
 #pragma once
 // https://www.lilygo.cc/products/t-display-s3-pro
-// T-Dispaly-Pro pinmap
+// T-Display-Pro PinMaps
 
 
 //! Using T-Display-Pro V1.0 , uncomment use V1.1 ,
@@ -35,11 +35,11 @@
 #define BOARD_TFT_WIDTH     222
 #define BOARD_TFT_HEIHT     480
 
-// BUTTON Pinmap
+// BUTTON PinMaps
 #define BOARD_USER_BUTTON   {0 /*btn1*/,12/*btn2*/,16/*btn3*/}
 #define BOARD_USER_BTN_NUM  3
 
-// Camera Shield pinmap
+// Camera Shield PinMaps
 #define CAMERA_PIN_RESET    (-1)
 #define CAMERA_PIN_SIOD     BOARD_I2C_SDA
 #define CAMERA_PIN_SIOC     BOARD_I2C_SCL
