@@ -4,7 +4,7 @@
 
 <h1 align = "center">🌟 T-Display-S3-Pro 🌟</h1>
 
-[![PlatformIO CI](https://github.com/Xinyuan-LillyGO/T-Display-S3-Pro/actions/workflows/pio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml)
+[![PlatformIO CI](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml/badge.svg)](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/actions/workflows/pio.yml)
 
 ![BackCover](./dimensions/BackCover/BackCover.jpg)
 
@@ -12,21 +12,29 @@
 
 ## 📖 Table of Contents
 
+- [📖 Table of Contents](#-table-of-contents)
 - [📋 Product](#-product)
 - [🚀 Quick Start](#-quick-start)
-  - [PlatformIO (Recommended)](#platformio-quick-start-recommended)
-  - [Arduino IDE](#arduino-ide-quick-start)
+  - [PlatformIO Quick Start (Recommended)](#platformio-quick-start-recommended)
+  - [Arduino IDE Quick Start](#arduino-ide-quick-start)
 - [🔧 Hardware Description](#-hardware-description)
-  - [📍 Pin Map](#-pins-map)
+  - [📍 Pins Map](#-pins-map)
   - [✨ Display Features](#-display-features)
-  - [🧑🏼‍🔧 I2C Devices](#-i2c-devices-address)
+  - [🧑🏼‍🔧 I2C Devices Address](#-i2c-devices-address)
   - [⚡ Electrical Parameters](#-electrical-parameters)
   - [💡 LED](#-led)
   - [🔌 QWIIC Connector](#-qwiic-connector)
 - [📚 Examples](#-examples)
-- [📄 Datasheet](#datasheet)
-- [📐 Case & Dimensions](#-case--dimensions)
-- [❓ FAQ](#faq)
+  - [ESP32 Basic Examples](#esp32-basic-examples)
+- [📄 Datasheet](#-datasheet)
+- [📐 Case \& Dimensions](#-case--dimensions)
+- [❓ FAQ](#-faq)
+  - [1. Upload port not found?](#1-upload-port-not-found)
+  - [2. Manual upload didn't work?](#2-manual-upload-didnt-work)
+  - [3. OTG external power not working?](#3-otg-external-power-not-working)
+  - [4. What does the physical switch do?](#4-what-does-the-physical-switch-do)
+  - [5. LED flashing when battery not connected?](#5-led-flashing-when-battery-not-connected)
+  - [6. Device suddenly shuts down?](#6-device-suddenly-shuts-down)
 - [📦 Dependencies](#-dependencies)
 
 ---
