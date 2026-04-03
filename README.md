@@ -17,6 +17,7 @@
 - [🚀 Quick Start](#-quick-start)
   - [PlatformIO Quick Start (Recommended)](#platformio-quick-start-recommended)
   - [Arduino IDE Quick Start](#arduino-ide-quick-start)
+- [💾 Flash Factory Firmware](#-flash-factory-firmware)
 - [🔧 Hardware Description](#-hardware-description)
   - [📍 Pins Map](#-pins-map)
   - [✨ Display Features](#-display-features)
@@ -97,6 +98,12 @@
 6. Select the correct Port and click Upload
 
 > **Troubleshooting:** If upload fails or the USB device keeps flashing, refer to the **FAQ** section below.
+
+---
+
+## 💾 Flash Factory Firmware
+
+If you need to restore the factory firmware or flash the UnitTest firmware for hardware testing, please refer to the [Firmware Flashing Guide](./firmware/README.MD).
 
 ---
 
