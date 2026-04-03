@@ -26,6 +26,7 @@
   - [💡 LED](#-led)
   - [🔌 QWIIC Connector](#-qwiic-connector)
   - [⏺︎ Button](#︎-button)
+  - [📴 Switch](#-switch)
 - [📚 Examples](#-examples)
   - [ESP32 Basic Examples](#esp32-basic-examples)
 - [📄 Datasheet](#-datasheet)
@@ -50,6 +51,8 @@
 | [T-Display-S3-Pro-MVSRLora][1]  | -          | -     | -        | -          |
 
 [1]: https://www.lilygo.cc/products/t-display-s3-pro
+
+> **Note:**  The T-Display-S3-Pro supports multiple camera models, depending on the model purchased.
 
 ---
 
@@ -216,6 +219,10 @@ If you need to restore the factory firmware or flash the UnitTest firmware for h
 | RIGHT BOTTOM | 16           | User button                              |
 
 > **Note:** Screen should be facing you to determine direction.
+
+### 📴 Switch
+
+* The power switch is only effective when the battery is connected; disconnect the battery from the motherboard.
 
 ---
 
