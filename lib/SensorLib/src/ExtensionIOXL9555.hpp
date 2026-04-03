@@ -270,7 +270,7 @@ private:
                     return true;
                 }
             }
-            log_e("No find the xl9555 chip ...");
+            log_e("xl9555 chip not found...");
             return false;
         }
         return probe();
