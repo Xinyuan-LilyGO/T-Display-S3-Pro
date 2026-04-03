@@ -1,17 +1,23 @@
 
-# How to Flash Firmware
+<div align="center" markdown="1">
+  <img src="../.github/LilyGo_logo.png" alt="LilyGo logo" width="100"/>
+</div>
+
+<h1 align = "center">🌟 How to Flash Firmware 🌟</h1>
+
 
 ## Table of Contents
 
-1. [Firmware](#firmware)
-2. [Enter Download Mode](#enter-download-mode)
-3. [Flash Methods](#flash-methods)
-   - [ESP-Launchpad Online](#esp-launchpad-online)
-   - [ESP Download Tool](#use-esp-download-tool)
-   - [Web Flasher](#use-web-flasher)
-   - [Command Line](#use-command-line)
-4. [Verify Flashing Success](#verify-flashing-success)
-   - [Check Boot Log](#check-boot-log)
+- [Table of Contents](#table-of-contents)
+- [Firmware](#firmware)
+- [Enter Download Mode](#enter-download-mode)
+- [Flash Methods](#flash-methods)
+  - [ESP-Launchpad Online](#esp-launchpad-online)
+  - [Use ESP Download Tool](#use-esp-download-tool)
+  - [Use Web Flasher](#use-web-flasher)
+  - [Use Command Line](#use-command-line)
+- [Verify Flashing Success](#verify-flashing-success)
+  - [Check Boot Log](#check-boot-log)
 
 ## Firmware
 
