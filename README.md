@@ -24,6 +24,7 @@
   - [⚡ Electrical Parameters](#-electrical-parameters)
   - [💡 LED](#-led)
   - [🔌 QWIIC Connector](#-qwiic-connector)
+  - [⏺︎ Button](#︎-button)
 - [📚 Examples](#-examples)
   - [ESP32 Basic Examples](#esp32-basic-examples)
 - [📄 Datasheet](#-datasheet)
@@ -41,8 +42,8 @@
 
 ## 📋 Product
 
-| Product (PinMap)                 | SOC        | Flash | PSRAM    | Resolution |
-| -------------------------------- | ---------- | ----- | -------- | ---------- |
+| Product (PinMap)                | SOC        | Flash | PSRAM    | Resolution |
+| ------------------------------- | ---------- | ----- | -------- | ---------- |
 | [T-Display-S3-Pro][1]           | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
 | [T-Display-S3-Pro-MVSRBoard][1] | -          | -     | -        | -          |
 | [T-Display-S3-Pro-MVSRLora][1]  | -          | -     | -        | -          |
@@ -80,17 +81,17 @@
 3. Copy all folders from the [lib folder](./lib/) to your Arduino libraries directory (e.g., `C:\Users\YourName\Documents\Arduino\libraries`)
 4. Configure the board settings as follows:
 
-   | Setting                           | Value                                |
-   | --------------------------------- | ------------------------------------ |
-   | Board                             | **ESP32S3 Dev Module**               |
-   | Port                              | Your port                            |
-   | USB CDC On Boot                   | Enable                               |
-   | CPU Frequency                     | 240MHz (WiFi)                        |
-   | Flash Mode                        | QIO 80MHz                            |
-   | Flash Size                        | **16MB (128Mb)**                     |
-   | Partition Scheme                  | **16M Flash (3MB APP/9.9MB FATFS)**  |
-   | PSRAM                             | **QSPI PSRAM**                       |
-   | Upload Speed                      | 921600                               |
+   | Setting          | Value                               |
+   | ---------------- | ----------------------------------- |
+   | Board            | **ESP32S3 Dev Module**              |
+   | Port             | Your port                           |
+   | USB CDC On Boot  | Enable                              |
+   | CPU Frequency    | 240MHz (WiFi)                       |
+   | Flash Mode       | QIO 80MHz                           |
+   | Flash Size       | **16MB (128Mb)**                    |
+   | Partition Scheme | **16M Flash (3MB APP/9.9MB FATFS)** |
+   | PSRAM            | **QSPI PSRAM**                      |
+   | Upload Speed     | 921600                              |
 
 5. Open `T-Display-S3-Pro` → `examples` → select an example → open the `.ino` file
 6. Select the correct Port and click Upload
@@ -103,75 +104,75 @@
 
 ### 📍 Pins Map
 
-| Name                     | GPIO | Note                        |
-| ------------------------ | ---- | --------------------------- |
-| SDA                      | 5    |                             |
-| SCL                      | 6    |                             |
-| SPI MISO                 | 8    |                             |
-| SPI MOSI                 | 17   |                             |
-| SPI SCLK                 | 18   |                             |
-| DISPLAY CS               | 39   |                             |
-| DISPLAY MISO/MOSI/SCLK   | 8/17/18 | Share SPI Bus           |
-| BACKLIGHT PIN            | 48   | 16-level dimming            |
-| SD CS                    | 14   |                             |
-| SD MISO/MOSI/SCLK        | 8/17/18 | Share SPI Bus           |
-| TOUCH RST                | 13   |                             |
-| TOUCH SDA/SCL            | 5/6  | Share I2C Bus              |
-| BUTTON 1                 | 0    |                             |
-| BUTTON 2                 | 12   |                             |
-| BUTTON 3                 | 16   |                             |
-| On board LED (Green)     | 38   |                             |
-| CAMERA RST               | -    | NC                          |
-| CAMERA SDA/SCL           | 5/6  | Share I2C Bus              |
-| CAMERA VSYNC             | 7    |                             |
-| CAMERA POWER DOWN        | 46   |                             |
-| CAMERA HREF              | 15   |                             |
-| CAMERA XCLK              | 4    |                             |
-| CAMERA PCLK              | 2    |                             |
-| CAMERA Y2-Y9             | 45,41,40,42,1,3,10,4 |                     |
-| CAMERA LED               | 38   | Share Onboard LED           |
-| CAMERA Default frequency | 20MHz|                             |
+| Name                     | GPIO                 | Note                                     |
+| ------------------------ | -------------------- | ---------------------------------------- |
+| SDA                      | 5                    |                                          |
+| SCL                      | 6                    |                                          |
+| SPI MISO                 | 8                    |                                          |
+| SPI MOSI                 | 17                   |                                          |
+| SPI SCLK                 | 18                   |                                          |
+| DISPLAY CS               | 39                   |                                          |
+| DISPLAY MISO/MOSI/SCLK   | 8/17/18              | Share SPI Bus                            |
+| BACKLIGHT PIN            | 48                   | 16-level dimming                         |
+| SD CS                    | 14                   |                                          |
+| SD MISO/MOSI/SCLK        | 8/17/18              | Share SPI Bus                            |
+| TOUCH RST                | 13                   |                                          |
+| TOUCH SDA/SCL            | 5/6                  | Share I2C Bus                            |
+| BUTTON 1 (BOOT)          | 0                    | User button, also used for download mode |
+| BUTTON 2                 | 12                   | User button                              |
+| BUTTON 3                 | 16                   | User button                              |
+| On board LED (Green)     | 38                   |                                          |
+| CAMERA RST               | -                    | NC                                       |
+| CAMERA SDA/SCL           | 5/6                  | Share I2C Bus                            |
+| CAMERA VSYNC             | 7                    |                                          |
+| CAMERA POWER DOWN        | 46                   |                                          |
+| CAMERA HREF              | 15                   |                                          |
+| CAMERA XCLK              | 4                    |                                          |
+| CAMERA PCLK              | 2                    |                                          |
+| CAMERA Y2-Y9             | 45,41,40,42,1,3,10,4 |                                          |
+| CAMERA LED               | 38                   | Share Onboard LED                        |
+| CAMERA Default frequency | 20MHz                |                                          |
 
 > **Note:** V1.0 uses PWM for backlight adjustment, while V1.1 uses constant current drive. See [AdjustBacklight example](./examples/AdjustBacklight/AdjustBacklight.ino) for details.
 
 ### ✨ Display Features
 
-| Feature                | Value           |
-| ---------------------- | --------------- |
-| Resolution             | 480 × 222       |
-| Display Size           | 2.33 Inch       |
-| Luminance              | 450 cd/m²       |
-| Driver IC              | ST7796U (SPI)   |
-| Contrast Ratio         | 1000:1          |
-| Color Gamut            | 70%             |
-| PPI                    | 221             |
-| Display Colors         | 262K            |
-| View Direction         | All (IPS)       |
-| Operating Temperature  | -20 ~ 70°C      |
+| Feature               | Value         |
+| --------------------- | ------------- |
+| Resolution            | 480 × 222     |
+| Display Size          | 2.33 Inch     |
+| Luminance             | 450 cd/m²     |
+| Driver IC             | ST7796U (SPI) |
+| Contrast Ratio        | 1000:1        |
+| Color Gamut           | 70%           |
+| PPI                   | 221           |
+| Display Colors        | 262K          |
+| View Direction        | All (IPS)     |
+| Operating Temperature | -20 ~ 70°C    |
 
 ### 🧑🏼‍🔧 I2C Devices Address
 
-| Device                           | 7-Bit Address | Shared Bus |
-| -------------------------------- | ------------- | ---------- |
-| [PowerManage SY6970][2]          | 0x6A          | ✅         |
-| [Optical Sensor LTR-553ALS][3]   | 0x23          | ✅         |
-| Capacitive Touchscreen CST226SE  | 0x5A          | ✅         |
+| Device                          | 7-Bit Address | Shared Bus |
+| ------------------------------- | ------------- | ---------- |
+| [PowerManage SY6970][2]         | 0x6A          | ✅          |
+| [Optical Sensor LTR-553ALS][3]  | 0x23          | ✅          |
+| Capacitive Touchscreen CST226SE | 0x5A          | ✅          |
 
 [2]: https://www.visvie.com/static/upload/file/20220916/1663318546578220.pdf
 [3]: https://optoelectronics.liteon.com/upload/download/DS86-2014-0007/LTR-553ALS-01_DS_V1.pdf
 
 ### ⚡ Electrical Parameters
 
-| Feature                   | Details                         |
-| ------------------------- | ------------------------------- |
-| 🔗 USB-C Input Voltage    | 3.9V - 6V                       |
-| 🔗 USB-C Output Voltage   | 4.55 - 5.55V                    |
-| ⚡ USB-C Output Current   | 0.5 - 1A                        |
-| ⚡ Charge Current         | 0 - 5056mA (Programmable)      |
-| 🔋 Battery Voltage        | 3840 ~ 4608mV (Programmable)   |
-| 🔋 Battery Capacity       | 3800mV / 470mAh                 |
-| 🔋 Battery Connector      | [ACHL Connector 1.2mm][4]     |
-| 🔋 Charge Temperature     | 0 ~ 60°C                        |
+| Feature                | Details                      |
+| ---------------------- | ---------------------------- |
+| 🔗 USB-C Input Voltage  | 3.9V - 6V                    |
+| 🔗 USB-C Output Voltage | 4.55 - 5.55V                 |
+| ⚡ USB-C Output Current | 0.5 - 1A                     |
+| ⚡ Charge Current       | 0 - 5056mA (Programmable)    |
+| 🔋 Battery Voltage      | 3840 ~ 4608mV (Programmable) |
+| 🔋 Battery Capacity     | 3800mV / 470mAh              |
+| 🔋 Battery Connector    | [ACHL Connector 1.2mm][4]    |
+| 🔋 Charge Temperature   | 0 ~ 60°C                     |
 
 [4]: https://www.jst.com/zh/products/crimp-style-connectors-wire-to-board-type/achl-connector/
 
@@ -182,19 +183,30 @@
 
 ### 💡 LED
 
-| LED       | GPIO | Note                                                            |
-| --------- | ---- | --------------------------------------------------------------- |
-| Green LED | 38   | Shared with camera fill light on camera shield models           |
-| Red LED   | -    | Charger status indicator                                        |
+| LED       | GPIO | Note                                                  |
+| --------- | ---- | ----------------------------------------------------- |
+| Green LED | 38   | Shared with camera fill light on camera shield models |
+| Red LED   | -    | Charger status indicator                              |
 
 > **Note:** The red LED flashes when no battery is connected. Disable via `PMU.disableStatLed();` - see [FAQ](#faq).
 
 ### 🔌 QWIIC Connector
 
-| Connector | GPIO                       | Description         |
-| --------- | -------------------------- | ------------------- |
-| LEFT      | 44, 43, 3V3, GND           | UART / I2C / GPIO   |
-| RIGHT     | SCL(6), SDA(5), 3V3, GND   | I2C only            |
+| Connector | GPIO                     | Description       |
+| --------- | ------------------------ | ----------------- |
+| LEFT      | 44, 43, 3V3, GND         | UART / I2C / GPIO |
+| RIGHT     | SCL(6), SDA(5), 3V3, GND | I2C only          |
+
+> **Note:** Screen should be facing you to determine direction.
+
+### ⏺︎ Button
+
+| LED          | GPIO         | Note                                     |
+| ------------ | ------------ | ---------------------------------------- |
+| LEFT TOP     | RESET        | Reset Device                             |
+| LEFT BOTTOM  | BOOT (GPIO0) | User button, also used for download mode |
+| RIGHT TOP    | 12           | User button                              |
+| RIGHT BOTTOM | 16           | User button                              |
 
 > **Note:** Screen should be facing you to determine direction.
 
@@ -295,16 +307,16 @@ Sudden shutdown only occurs when battery is not connected. Solution: disable SY6
 
 ## 📦 Dependencies
 
-| Library             | Repository |
-| ------------------- | ---------- |
-| XPowersLib          | [GitHub](https://github.com/lewisxhe/XPowersLib) |
-| SensorLib           | [GitHub](https://github.com/lewisxhe/SensorLib) |
-| lvgl                | [GitHub](https://github.com/lvgl/lvgl) (v8.3.1) |
-| TFT_eSPI            | [GitHub](https://github.com/Bodmer/TFT_eSPI) |
-| TouchLib            | [GitHub](https://github.com/mmMicky/TouchLib) |
-| Arduino_GFX         | [GitHub](https://github.com/moononournation/Arduino_GFX) |
-| MPU9250             | [GitHub](https://github.com/hideakitai/MPU9250) |
-| MPU6050             | [GitHub](https://github.com/electroniccats/mpu6050) |
-| ESP32_USB_Stream    | [GitHub](https://github.com/esp-arduino-libs/ESP32_USB_Stream) (v0.0.1) |
-| ESP32-audioI2S      | [GitHub](https://github.com/schreibfaul1/ESP32-audioI2S) (v3.0.8) |
-| JPEGDEC             | [GitHub](https://github.com/bitbank2/JPEGDEC) (v1.2.8) |
+| Library          | Repository                                                              |
+| ---------------- | ----------------------------------------------------------------------- |
+| XPowersLib       | [GitHub](https://github.com/lewisxhe/XPowersLib)                        |
+| SensorLib        | [GitHub](https://github.com/lewisxhe/SensorLib)                         |
+| lvgl             | [GitHub](https://github.com/lvgl/lvgl) (v8.3.1)                         |
+| TFT_eSPI         | [GitHub](https://github.com/Bodmer/TFT_eSPI)                            |
+| TouchLib         | [GitHub](https://github.com/mmMicky/TouchLib)                           |
+| Arduino_GFX      | [GitHub](https://github.com/moononournation/Arduino_GFX)                |
+| MPU9250          | [GitHub](https://github.com/hideakitai/MPU9250)                         |
+| MPU6050          | [GitHub](https://github.com/electroniccats/mpu6050)                     |
+| ESP32_USB_Stream | [GitHub](https://github.com/esp-arduino-libs/ESP32_USB_Stream) (v0.0.1) |
+| ESP32-audioI2S   | [GitHub](https://github.com/schreibfaul1/ESP32-audioI2S) (v3.0.8)       |
+| JPEGDEC          | [GitHub](https://github.com/bitbank2/JPEGDEC) (v1.2.8)                  |
