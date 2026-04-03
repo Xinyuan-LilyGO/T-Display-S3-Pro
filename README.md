@@ -119,7 +119,7 @@ The T-Display-S3-Pro backplane-related examples can be found by opening the foll
 | BUTTON 1                 | 0                 |                   |
 | BUTTON 2                 | 12                |                   |
 | BUTTON 3                 | 16                |                   |
-|                          |                   |                   |
+| On board LED (Green)     | 38                |                   |
 | Camera back panel        | Camera back panel | Camera back panel |
 | CAMERA RST               | -                 | NC                |
 | CAMERA SDA               | 5                 | Share I2C Bus     |
@@ -137,7 +137,7 @@ The T-Display-S3-Pro backplane-related examples can be found by opening the foll
 | CAMERA Y4                | 40                |                   |
 | CAMERA Y3                | 41                |                   |
 | CAMERA Y2                | 45                |                   |
-| CAMERA LED               | 38                |                   |
+| CAMERA LED               | 38                | Share Onboard LED |
 | CAMERA Default frequency | 20MHZ             |                   |
 
 * The early version of T-Display-S3-Pro V1.0 uses PWM for backlight adjustment. The V1.1 upgrade uses backlight constant current drive. The drive method is different. Please see the [example](./examples/AdjustBacklight/AdjustBacklight.ino) for specific usage.
@@ -184,6 +184,24 @@ The T-Display-S3-Pro backplane-related examples can be found by opening the foll
 > The charging current should not be greater than half of the battery capacity
 >
 > T-Display-S3-Pro uses the SY6970 power path switching chip. In order to maintain stable power supply when the battery is not connected, the charging function must be turned off. Devices connected to the battery do not need to be turned off. How to turn off charge please refer [here](https://github.com/Xinyuan-LilyGO/T-Display-S3-Pro/blob/c267d7463609e1f6c62e74455ac5048c9ae93bc3/examples/PMU_Example/PMU_Example.ino#L58)
+
+### 💡 LED
+
+| LED       | GPIO | Note                                                                                   |
+| --------- | ---- | -------------------------------------------------------------------------------------- |
+| Green LED | 38   | If it's a shield with a camera, then this GPIO is shared with the camera's fill light. |
+| Red LED   | X    | Charger control                                                                        |
+
+* The red LED will flash when no battery is connected, indicating that no battery is detected. To prevent the LED from flashing, you can turn it off via software. see [FAQ](#faq)
+
+### 🔌 QWIIC Connector
+
+| QWIIC Connector | GPIO                  | Note                |
+| --------------- | --------------------- | ------------------- |
+| LEFT            | 44,43,3V3,GND         | UART or I2C or GPIO |
+| RIGHT           | SCL(6),SDA(5),3V3,GND | Only I2C            |
+
+* Determine direction: The screen should be facing you.
 
 [1]: https://www.lilygo.cc/products/t-display-s3-pro
 [2]: https://www.visvie.com/static/upload/file/20220916/1663318546578220.pdf
