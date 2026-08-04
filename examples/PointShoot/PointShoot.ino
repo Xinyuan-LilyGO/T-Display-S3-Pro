@@ -16,11 +16,13 @@
 #include <TFT_eSPI.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <DNSServer.h>
 #include <XPowersLib.h>
 #include <SPI.h>
 #include <SD.h>
 #include <FFat.h>
 #include <Preferences.h>
+#include <sys/time.h>
 #include "utilities.h"
 
 #define AP_SSID      "TDisplayCam"
@@ -50,7 +52,7 @@ static uint8_t orient = ORIENT_DEFAULT;
 #define CAM_XCLK_HZ    (10 * 1000000)
 #define STILL_SIZE     FRAMESIZE_QSXGA   // 2560x1920
 #define PREVIEW_SIZE   FRAMESIZE_QVGA    // 320x240
-#define SETTLE_FRAMES  2                 // frames to drop after a size change
+#define SETTLE_FRAMES  0                 // frames to drop after a size change
 
 // The camera is initialised once, in JPEG mode at the largest frame size, and
 // a shot is just a set_framesize() away. Tearing it down and re-initialising
@@ -78,6 +80,7 @@ static int vfY = (480 - VF_H_MAX) / 2;
 TFT_eSPI    tft;
 PowersSY6970 PMU;
 WebServer   server(80);
+DNSServer   dns;
 Preferences prefs;
 
 static fs::FS     *store    = nullptr;
@@ -86,6 +89,7 @@ static uint16_t   *vf       = nullptr;   // rotated viewfinder buffer (PSRAM)
 static bool        wifiOn   = false;
 static char        status[48] = "";
 static uint16_t    battMv     = 0;
+static char        sdInfo[48] = "not probed";
 static uint16_t    photoCount = 0;
 static uint32_t    photoBytes = 0;
 static uint8_t     battPct    = 0;
@@ -256,14 +260,32 @@ static bool setFramesize(framesize_t fs, int wantW)
 static void initStorage()
 {
     // Probe SD before the display so a failed probe cannot leave the shared
-    // SPI bus half-configured under TFT_eSPI.
+    // SPI bus half-configured under TFT_eSPI. The display is on the same bus
+    // and its CS is still floating at this point, so it can answer and corrupt
+    // the card's replies - hold it deasserted.
+    pinMode(BOARD_TFT_CS, OUTPUT);
+    digitalWrite(BOARD_TFT_CS, HIGH);
+    pinMode(BOARD_SD_CS, OUTPUT);
+    digitalWrite(BOARD_SD_CS, HIGH);
+
     SPI.begin(BOARD_SPI_SCK, BOARD_SPI_MISO, BOARD_SPI_MOSI);
-    if (SD.begin(BOARD_SD_CS, SPI)) {
-        store = &SD;
-        storeName = "SD";
-        return;
+    // SD cards must be initialised at <=400kHz; some refuse faster probes.
+    for (uint32_t hz : {20000000u, 4000000u, 1000000u, 400000u}) {
+        if (SD.begin(BOARD_SD_CS, SPI, hz)) {
+            store = &SD;
+            storeName = "SD";
+            snprintf(sdInfo, sizeof(sdInfo), "ok %luHz %lluMB",
+                     (unsigned long)hz, (unsigned long long)(SD.cardSize() >> 20));
+            return;
+        }
+        SD.end();
     }
-    SD.end();
+
+    // Do NOT pass format_if_empty here: arduino-esp32's format path double-frees
+    // (assert in multi_heap_free) and panics into a boot loop. The card must be
+    // formatted FAT32 externally; exFAT, which cards ship with, is unreadable
+    // by this library.
+    snprintf(sdInfo, sizeof(sdInfo), "no FAT32");
     if (FFat.begin(true)) {
         store = &FFat;
         storeName = "flash";
@@ -286,7 +308,7 @@ static void scanPhotos()
     }
 }
 
-static size_t freeBytes()
+static uint64_t freeBytes()
 {
     if (store == &SD)  return SD.totalBytes() - SD.usedBytes();
     if (store == &FFat) return FFat.freeBytes();
@@ -371,19 +393,31 @@ static bool waitForFocus(uint32_t timeoutMs)
     return false;
 }
 
+// Switching to full res and then grabbing are the same operation: the frame
+// that proves the new size took effect is itself the photo. Waiting for one
+// and then fetching another costs an extra full-res readout, ~0.9s.
+static camera_fb_t *grabStill()
+{
+    sensor_t *sn = esp_camera_sensor_get();
+    if (!sn || sn->set_framesize(sn, STILL_SIZE) != 0) return nullptr;
+    delay(100);
+    for (int i = 0; i < 12; i++) {
+        camera_fb_t *fb = esp_camera_fb_get();
+        if (!fb) { delay(20); continue; }
+        if (fb->width == STILL_W) return fb;
+        esp_camera_fb_return(fb);
+    }
+    return nullptr;
+}
+
 static void capture()
 {
     strcpy(status, "AF wait");
     bool locked = waitForFocus(1200);
     strcpy(status, "capturing...");
 
-    if (!setFramesize(STILL_SIZE, STILL_W)) {
-        strcpy(status, "size switch FAILED");
-        setFramesize(PREVIEW_SIZE, PREVIEW_W);
-        return;
-    }
 
-    camera_fb_t *fb = esp_camera_fb_get();
+    camera_fb_t *fb = grabStill();
     if (!fb) {
         strcpy(status, "capture FAILED");
         setFramesize(PREVIEW_SIZE, PREVIEW_W);
@@ -417,16 +451,28 @@ static void capture()
 
 static void handleRoot()
 {
+    // The board has no RTC and no internet in AP mode, so photo timestamps
+    // would all read 1970. The browser knows the time - take it from there on
+    // page load, which makes the time-based deletes below meaningful.
     String p = F("<!doctype html><meta name=viewport content='width=device-width,initial-scale=1'>"
-                 "<style>body{font:17px -apple-system;margin:16px}a{display:block;padding:12px 0;"
-                 "border-bottom:1px solid #ccc;text-decoration:none}</style><h2>Photos</h2>");
+                 "<style>body{font:17px -apple-system;margin:16px}"
+                 "a.f{display:block;padding:12px 0;border-bottom:1px solid #ccc;"
+                 "text-decoration:none}"
+                 ".b{display:inline-block;margin:4px 8px 12px 0;padding:8px 12px;"
+                 "border:1px solid #c00;border-radius:6px;color:#c00;"
+                 "text-decoration:none;font-size:15px}</style>"
+                 "<script>fetch('/time?t='+Math.floor(Date.now()/1000));</script>"
+                 "<h2>Photos</h2>"
+                 "<a class=b href='/delh?h=1' onclick=\"return confirm('Delete photos from the last hour?')\">Last hour</a>"
+                 "<a class=b href='/delh?h=24' onclick=\"return confirm('Delete photos from the last 24 hours?')\">Last 24h</a>"
+                 "<a class=b href='/delall' onclick=\"return confirm('Delete ALL photos? This cannot be undone.')\">Delete all</a>");
     File dir = store->open("/");
     int n = 0;
     for (File f = dir.openNextFile(); f; f = dir.openNextFile()) {
         String name = f.name();
         if (!name.startsWith("/")) name = "/" + name;
         if (name.endsWith(".JPG")) {
-            p += "<a href='/img?f=" + name + "'>" + name.substring(1) +
+            p += "<a class=f href='/img?f=" + name + "'>" + name.substring(1) +
                  "  <small>" + String(f.size() / 1024) + "KB</small>"
                  "<a href='/del?f=" + name + "' style='float:right;color:#c00'>"
                  "delete</a></a>";
@@ -436,7 +482,9 @@ static void handleRoot()
     }
     if (!n) p += F("<p>No photos yet.</p>");
     p += F("<p><small>Tap a photo, then long-press it and choose "
-           "<b>Add to Photos</b>.</small></p>");
+           "<b>Add to Photos</b>.<br>If saving is unavailable, this is the "
+           "captive sign-in window - open <b>http://192.168.4.1</b> in Safari "
+           "instead.</small></p>");
     server.send(200, "text/html", p);
 }
 
@@ -458,6 +506,74 @@ static void handleDel()
     server.send(303);
 }
 
+// Delete every photo, or only those newer than `since`. A zero `since` means
+// no time filter. Files written before the clock was set carry a 1970 stamp
+// and so never match a time window - they are only removed by "delete all",
+// which is the safe way round.
+static int deletePhotos(time_t since)
+{
+    if (!store) return 0;
+    int n = 0;
+    File dir = store->open("/");
+    String doomed[64];
+    int count = 0;
+    for (File f = dir.openNextFile(); f && count < 64; f = dir.openNextFile()) {
+        String name = f.name();
+        if (!name.startsWith("/")) name = "/" + name;
+        if (name.endsWith(".JPG") && (since == 0 || f.getLastWrite() >= since))
+            doomed[count++] = name;
+        f.close();
+    }
+    dir.close();
+    for (int i = 0; i < count; i++)
+        if (store->remove(doomed[i])) n++;
+    scanPhotos();
+    return n;
+}
+
+static void handleDelAll()
+{
+    int n = deletePhotos(0);
+    snprintf(status, sizeof(status), "deleted %d", n);
+    server.sendHeader("Location", "/");
+    server.send(303);
+}
+
+static void handleDelHours()
+{
+    long h = server.arg("h").toInt();
+    time_t now = time(nullptr);
+    // Refuse a time-based delete until the clock has been set, or "recent"
+    // would be meaningless and could match everything or nothing.
+    if (h <= 0 || now < 1600000000) {
+        server.send(409, "text/plain", "clock not set - reload the gallery first");
+        return;
+    }
+    int n = deletePhotos(now - (time_t)h * 3600);
+    snprintf(status, sizeof(status), "deleted %d", n);
+    server.sendHeader("Location", "/");
+    server.send(303);
+}
+
+// Phones probe a known URL to decide whether a network has internet. Serving
+// anything other than the expected response makes them declare a captive
+// portal and pop the sign-in sheet, which is where the gallery appears.
+static void handleCaptive()
+{
+    server.sendHeader("Location", "http://192.168.4.1/", true);
+    server.send(302, "text/plain", "");
+}
+
+static void handleTime()
+{
+    long t = server.arg("t").toInt();
+    if (t > 1600000000) {
+        struct timeval tv = { .tv_sec = (time_t)t, .tv_usec = 0 };
+        settimeofday(&tv, nullptr);
+    }
+    server.send(200, "text/plain", "ok");
+}
+
 static void toggleWifi()
 {
     wifiOn = !wifiOn;
@@ -476,10 +592,17 @@ static void toggleWifi()
         server.on("/", handleRoot);
         server.on("/img", handleImg);
         server.on("/del", handleDel);
+        server.on("/delall", handleDelAll);
+        server.on("/delh", handleDelHours);
+        server.on("/time", handleTime);
+        server.onNotFound(handleCaptive);
+        dns.setTTL(0);
+        dns.start(53, "*", WiFi.softAPIP());
         server.begin();
         strcpy(status, "AP up");
         tft.fillRect(0, vfY, VF_W, vfH, TFT_BLACK);
     } else {
+        dns.stop();
         server.stop();
         WiFi.softAPdisconnect(true);
         WiFi.mode(WIFI_OFF);
@@ -617,7 +740,8 @@ static void drawStatus()
     const int lh = 18;
 
     uint32_t avg = photoCount ? photoBytes / photoCount : 300000;
-    uint32_t remain = freeBytes() / (avg ? avg : 300000);
+    uint64_t remain = freeBytes() / (avg ? avg : 300000);
+    if (remain > 9999) remain = 9999;          // keep the field readable
     tft.setCursor(4, 6);
     tft.printf("%u/%u pics", photoCount, (unsigned)(photoCount + remain));
 
@@ -724,12 +848,8 @@ void setup()
     // to zero: at zero, writes are dropped outright when the buffer is busy.
     Serial.setTxTimeoutMs(10);
 
-    initStorage();
-
-    tft.begin();
-    tft.setRotation(DISPLAY_ROTATION);   // 222x480 portrait
-    tft.fillScreen(TFT_BLACK);
-
+    // PMU first: if the card slot is fed from a PMU-controlled rail, probing
+    // storage before the PMU is up would find an unpowered card.
     if (PMU.init(Wire, BOARD_I2C_SDA, BOARD_I2C_SCL, SY6970_SLAVE_ADDRESS)) {
         PMU.setChargeTargetVoltage(3856);
         PMU.setPrechargeCurr(64);
@@ -753,6 +873,14 @@ void setup()
         battMv = PMU.getBattVoltage();
         if (battMv < 3000) PMU.disableCharge();
     }
+
+
+    delay(50);
+    initStorage();
+
+    tft.begin();
+    tft.setRotation(DISPLAY_ROTATION);   // 222x480 portrait
+    tft.fillScreen(TFT_BLACK);
 
     initTouch();
 
@@ -783,8 +911,8 @@ void setup()
 
     snprintf(status, sizeof(status), "ready");
 
-    Serial.printf("storage=%s free=%u autofocus=%d\n", storeName,
-                  (unsigned)freeBytes(), afReady);
+    Serial.printf("storage=%s free=%llu autofocus=%d\n", storeName,
+                  (unsigned long long)freeBytes(), afReady);
 }
 
 // ponytail: 250ms lockout is the whole debounce story for three buttons.
@@ -842,14 +970,15 @@ void loop()
             f.close();
             Serial.println("\nEND");
         } else if (c == 'i') {
-            Serial.printf("storage=%s free=%u autofocus=%d touch=%d wifi=%d torch=%d "
-                          "reset=%d heap=%u psram=%u batt=%umV(%s) chg=%d ichg=%umA ilim=%umA sharp=%u peak=%u foc=%d\n",
-                          storeName, (unsigned)freeBytes(), afReady, touchReady,
+            Serial.printf("storage=%s free=%llu autofocus=%d touch=%d wifi=%d torch=%d "
+                          "reset=%d heap=%u psram=%u batt=%umV(%s) chg=%d ichg=%umA ilim=%umA "
+                          "sd[%s] sharp=%u peak=%u foc=%d\n",
+                          storeName, (unsigned long long)freeBytes(), afReady, touchReady,
                           wifiOn, torchOn, (int)esp_reset_reason(),
                           (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getFreePsram(),
                           (unsigned)battMv, battPctStr(), PMU.isCharging(),
                           (unsigned)PMU.getChargerConstantCurr(),
-                          (unsigned)PMU.getInputCurrentLimit(),
+                          (unsigned)PMU.getInputCurrentLimit(), sdInfo,
                           (unsigned)sharpness, (unsigned)sharpPeak, inFocus());
         } else if (c == 'l') {
             File dir = store->open("/");
@@ -880,7 +1009,7 @@ void loop()
         else if (ty < vfY)               setTorch(!torchOn); // strip above it
     }
 
-    if (wifiOn) server.handleClient();
+    if (wifiOn) { dns.processNextRequest(); server.handleClient(); }
     else      { drawViewfinder(); measureSharpness(); }
 
     pollBattery();
