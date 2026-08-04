@@ -1,0 +1,12 @@
+# 16MB flash: 4MB app, photos, and a coredump area.
+# FAT rather than LittleFS to match the SD card's filesystem, NOT for speed:
+# measured ~52KB/s on LittleFS vs ~57KB/s on FAT with chunked writes. Neither
+# is the bottleneck - NOR sector erase (~40ms per 4KB) is.
+# The coredump partition matters because this board's console is USB CDC: a
+# panic re-enumerates the USB device and the backtrace is lost with it.
+# Name,     Type, SubType,  Offset,   Size,     Flags
+nvs,        data, nvs,      0x9000,   0x5000,
+otadata,    data, ota,      0xe000,   0x2000,
+app0,       app,  ota_0,    0x10000,  0x400000,
+ffat,       data, fat,      0x410000, 0xBE0000,
+coredump,   data, coredump, 0xFF0000, 0x10000,
