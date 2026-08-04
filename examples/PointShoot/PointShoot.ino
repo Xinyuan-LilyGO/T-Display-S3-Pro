@@ -86,6 +86,57 @@ static uint16_t   *vf       = nullptr;   // rotated viewfinder buffer (PSRAM)
 static bool        wifiOn   = false;
 static char        status[48] = "";
 static uint16_t    battMv     = 0;
+static uint8_t     battPct    = 0;
+static bool        battChg    = false;
+
+// The SY6970 has no fuel gauge, so state of charge is inferred from voltage
+// against a LiPo discharge curve. That sags under load - a capture pulls the
+// reading down - so the voltage is smoothed before conversion.
+static uint8_t battPercent(uint16_t mv)
+{
+    static const uint16_t curve[][2] = {
+        {3300, 0}, {3600, 10}, {3700, 25}, {3750, 40},
+        {3850, 60}, {3950, 75}, {4050, 90}, {4200, 100},
+    };
+    const int n = sizeof(curve) / sizeof(curve[0]);
+    if (mv <= curve[0][0]) return 0;
+    for (int i = 1; i < n; i++) {
+        if (mv < curve[i][0]) {
+            uint16_t v0 = curve[i - 1][0], p0 = curve[i - 1][1];
+            return p0 + (uint32_t)(mv - v0) * (curve[i][1] - p0) / (curve[i][0] - v0);
+        }
+    }
+    return 100;
+}
+
+// Percentage is meaningless while the charger holds the terminal voltage up.
+static const char *battPctStr()
+{
+    static char b[8];
+    if (battChg) strcpy(b, "chg");
+    else         snprintf(b, sizeof(b), "%u%%", battPct);
+    return b;
+}
+
+static void pollBattery()
+{
+    static uint32_t next = 0;
+    if (millis() < next) return;
+    next = millis() + 2000;
+
+    uint16_t mv = PMU.getBattVoltage();
+    if (mv < 2500) return;                       // no battery / bad reading
+
+    // While charging the terminal voltage is held up by the charger and is not
+    // the cell's resting voltage, so the curve would read near-full whatever
+    // the real charge. Only convert while discharging, and drop the smoothing
+    // history when the state flips so the first reading off USB is honest.
+    bool chg = PMU.isCharging() || PMU.isVbusIn();
+    if (chg != battChg) { battChg = chg; battMv = 0; }
+
+    battMv = battMv ? (battMv * 7 + mv) / 8 : mv;
+    if (!battChg) battPct = battPercent(battMv);
+}
 
 // ---------------------------------------------------------------- camera ---
 
@@ -527,11 +578,14 @@ static void drawStatus()
     static char shown[48] = "\1";
     static bool shownWifi = !wifiOn;
     static int shownFocus = -1;
-    if (!strcmp(shown, status) && shownWifi == wifiOn && shownFocus == (int)inFocus())
+    static int shownBatt = -1;
+    if (!strcmp(shown, status) && shownWifi == wifiOn &&
+        shownFocus == (int)inFocus() && shownBatt == (int)(battChg ? -2 : battPct))
         return;
     strcpy(shown, status);
     shownWifi = wifiOn;
     shownFocus = (int)inFocus();
+    shownBatt  = (int)(battChg ? -2 : battPct);
 
     tft.fillRect(0, 0, VF_W, vfY, TFT_BLACK);
     tft.fillRect(0, vfY + vfH, VF_W, 480 - vfY - vfH, TFT_BLACK);
@@ -542,6 +596,17 @@ static void drawStatus()
     tft.setCursor(4, 6);
     tft.printf("%s %u.%uMB", storeName,
                (unsigned)(freeBytes() >> 20), (unsigned)((freeBytes() >> 16) & 0xF) * 10 / 16);
+
+    // No percentage on USB: it would be the charger's voltage, not the cell's.
+    char b[8];
+    if (battChg) strcpy(b, "USB");
+    else         snprintf(b, sizeof(b), "%u%%", battPct);
+    tft.setTextColor(battChg ? TFT_CYAN :
+                     battPct > 40 ? TFT_GREEN : battPct > 15 ? TFT_YELLOW : TFT_RED,
+                     TFT_BLACK);
+    tft.setCursor(VF_W - 4 - (int)strlen(b) * 12, 6);
+    tft.print(b);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setCursor(4, 6 + lh);
     tft.print(status);
 
@@ -631,8 +696,9 @@ void setup()
 {
     Serial.begin(115200);
     // With ARDUINO_USB_CDC_ON_BOOT and no host attached (running on battery),
-    // every write waits out the default 100ms TX timeout. Make them give up.
-    Serial.setTxTimeoutMs(0);
+    // every write waits out the default 100ms TX timeout. Shorten it, but not
+    // to zero: at zero, writes are dropped outright when the buffer is busy.
+    Serial.setTxTimeoutMs(10);
 
     initStorage();
 
@@ -759,11 +825,11 @@ void loop()
             Serial.println("\nEND");
         } else if (c == 'i') {
             Serial.printf("storage=%s free=%u autofocus=%d touch=%d wifi=%d torch=%d "
-                          "reset=%d heap=%u psram=%u batt=%umV chg=%d ichg=%umA ilim=%umA sharp=%u peak=%u foc=%d\n",
+                          "reset=%d heap=%u psram=%u batt=%umV(%s) chg=%d ichg=%umA ilim=%umA sharp=%u peak=%u foc=%d\n",
                           storeName, (unsigned)freeBytes(), afReady, touchReady,
                           wifiOn, torchOn, (int)esp_reset_reason(),
                           (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getFreePsram(),
-                          (unsigned)battMv, PMU.isCharging(),
+                          (unsigned)battMv, battPctStr(), PMU.isCharging(),
                           (unsigned)PMU.getChargerConstantCurr(),
                           (unsigned)PMU.getInputCurrentLimit(),
                           (unsigned)sharpness, (unsigned)sharpPeak, inFocus());
@@ -799,5 +865,6 @@ void loop()
     if (wifiOn) server.handleClient();
     else      { drawViewfinder(); measureSharpness(); }
 
+    pollBattery();
     drawStatus();
 }
