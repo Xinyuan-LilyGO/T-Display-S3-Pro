@@ -86,6 +86,8 @@ static uint16_t   *vf       = nullptr;   // rotated viewfinder buffer (PSRAM)
 static bool        wifiOn   = false;
 static char        status[48] = "";
 static uint16_t    battMv     = 0;
+static uint16_t    photoCount = 0;
+static uint32_t    photoBytes = 0;
 static uint8_t     battPct    = 0;
 static bool        battChg    = false;
 
@@ -268,6 +270,22 @@ static void initStorage()
     }
 }
 
+// Free space means little on a camera; shots taken and shots left mean a lot.
+// Capacity is estimated from the average size of what has actually been
+// stored, so it tracks the scene and quality setting rather than a guess.
+static void scanPhotos()
+{
+    photoCount = 0;
+    photoBytes = 0;
+    if (!store) return;
+    File dir = store->open("/");
+    for (File f = dir.openNextFile(); f; f = dir.openNextFile()) {
+        String n = f.name();
+        if (n.endsWith(".JPG")) { photoCount++; photoBytes += f.size(); }
+        f.close();
+    }
+}
+
 static size_t freeBytes()
 {
     if (store == &SD)  return SD.totalBytes() - SD.usedBytes();
@@ -318,8 +336,13 @@ static bool saveJpeg(const uint8_t *buf, size_t len, char *nameOut, size_t nameL
     }
     f.close();
 
-    if (ok) prefs.putUInt("n", n);
-    else    store->remove(nameOut);
+    if (ok) {
+        prefs.putUInt("n", n);
+        photoCount++;
+        photoBytes += len;
+    } else {
+        store->remove(nameOut);
+    }
     return ok;
 }
 
@@ -430,7 +453,7 @@ static void handleImg()
 static void handleDel()
 {
     String f = server.arg("f");
-    if (f.startsWith("/") && f.indexOf("..") < 0) store->remove(f);
+    if (f.startsWith("/") && f.indexOf("..") < 0) { store->remove(f); scanPhotos(); }
     server.sendHeader("Location", "/");
     server.send(303);
 }
@@ -593,9 +616,10 @@ static void drawStatus()
     tft.setTextSize(2);         // 12x16 per char, so 18 chars across the panel
     const int lh = 18;
 
+    uint32_t avg = photoCount ? photoBytes / photoCount : 300000;
+    uint32_t remain = freeBytes() / (avg ? avg : 300000);
     tft.setCursor(4, 6);
-    tft.printf("%s %u.%uMB", storeName,
-               (unsigned)(freeBytes() >> 20), (unsigned)((freeBytes() >> 16) & 0xF) * 10 / 16);
+    tft.printf("%u/%u pics", photoCount, (unsigned)(photoCount + remain));
 
     // No percentage on USB: it would be the charger's voltage, not the cell's.
     char b[8];
@@ -754,16 +778,10 @@ void setup()
     pinMode(16, INPUT_PULLUP);
 
     prefs.begin("cam", false);
+    scanPhotos();
     updateViewfinderRect();
 
-    // Survives the reset, unlike anything printed to USB CDC on the way down.
-    // 1=power-on 3=sw 4=panic 5=int-wdt 6=task-wdt 7=wdt 9=brownout 10=usb
-    esp_reset_reason_t why = esp_reset_reason();
-    if (why == ESP_RST_POWERON || why == ESP_RST_EXT || why == ESP_RST_SW)
-        snprintf(status, sizeof(status), "ready");
-    else
-        snprintf(status, sizeof(status), "! reset %d", (int)why);
-    Serial.printf("reset_reason=%d\n", (int)why);
+    snprintf(status, sizeof(status), "ready");
 
     Serial.printf("storage=%s free=%u autofocus=%d\n", storeName,
                   (unsigned)freeBytes(), afReady);
