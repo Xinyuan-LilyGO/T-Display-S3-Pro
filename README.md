@@ -44,15 +44,19 @@
 
 ## 📋 Product
 
-| Product (PinMap)                | SOC        | Flash | PSRAM    | Resolution |
-| ------------------------------- | ---------- | ----- | -------- | ---------- |
-| [T-Display-S3-Pro][1]           | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    |
-| [T-Display-S3-Pro-MVSRBoard][1] | -          | -     | -        | -          |
-| [T-Display-S3-Pro-MVSRLora][1]  | -          | -     | -        | -          |
+| Product (PinMap)                | SOC        | Flash | PSRAM    | Resolution | LTR-553ALS |
+| ------------------------------- | ---------- | ----- | -------- | ---------- | ---------- |
+| [T-Display-S3-Pro][1]           | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    | ✅          |
+| [T-Display-S3-Pro External][1]  | ESP32-S3R8 | 16MB  | 8MB(OPI) | 222x480    | X          |
+| [T-Display-S3-Pro-MVSRBoard][1] | -          | -     | -        | -          |            |
+| [T-Display-S3-Pro-MVSRLora][1]  | -          | -     | -        | -          |            |
 
 [1]: https://www.lilygo.cc/products/t-display-s3-pro
+[2]: https://lilygo.cc/products/t-display-s3-pro-external
 
 > **Note:**  The T-Display-S3-Pro supports multiple camera models, depending on the model purchased.
+> The LTR-553ALS ambient light sensor is included only on the T-Display-S3-Pro; the T-Display-S3-Pro External does not feature this sensor.
+>
 
 ---
 
